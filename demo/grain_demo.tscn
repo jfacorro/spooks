@@ -1,0 +1,168 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://post_process/grain_overlay.tscn" id="1_grain"]
+[ext_resource type="Script" path="res://demo/block_shadows.gd" id="2_shadows"]
+[ext_resource type="Script" path="res://demo/disc.gd" id="3_disc"]
+[ext_resource type="Script" path="res://demo/spy.gd" id="4_spy"]
+
+[node name="GrainDemo" type="Node2D"]
+
+[node name="Floor" type="ColorRect" parent="."]
+offset_left = -900.0
+offset_top = -560.0
+offset_right = 900.0
+offset_bottom = 560.0
+color = Color(0.4, 0.45, 0.51, 1)
+
+[node name="Rug" type="ColorRect" parent="."]
+offset_left = -700.0
+offset_top = 60.0
+offset_right = -460.0
+offset_bottom = 260.0
+color = Color(0.52, 0.57, 0.63, 1)
+
+[node name="Blocks" type="Node2D" parent="."]
+script = ExtResource("2_shadows")
+
+[node name="WallNorth" type="ColorRect" parent="Blocks"]
+offset_left = -900.0
+offset_top = -560.0
+offset_right = 900.0
+offset_bottom = -520.0
+color = Color(0.11, 0.14, 0.18, 1)
+
+[node name="WallSouthA" type="ColorRect" parent="Blocks"]
+offset_left = -900.0
+offset_top = 520.0
+offset_right = 100.0
+offset_bottom = 560.0
+color = Color(0.11, 0.14, 0.18, 1)
+
+[node name="WallSouthB" type="ColorRect" parent="Blocks"]
+offset_left = 240.0
+offset_top = 520.0
+offset_right = 900.0
+offset_bottom = 560.0
+color = Color(0.11, 0.14, 0.18, 1)
+
+[node name="WallWest" type="ColorRect" parent="Blocks"]
+offset_left = -900.0
+offset_top = -560.0
+offset_right = -860.0
+offset_bottom = 560.0
+color = Color(0.11, 0.14, 0.18, 1)
+
+[node name="WallEast" type="ColorRect" parent="Blocks"]
+offset_left = 860.0
+offset_top = -560.0
+offset_right = 900.0
+offset_bottom = 560.0
+color = Color(0.11, 0.14, 0.18, 1)
+
+[node name="WallInnerA" type="ColorRect" parent="Blocks"]
+offset_top = -560.0
+offset_right = 40.0
+offset_bottom = 40.0
+color = Color(0.11, 0.14, 0.18, 1)
+
+[node name="WallInnerB" type="ColorRect" parent="Blocks"]
+offset_top = 200.0
+offset_right = 40.0
+offset_bottom = 560.0
+color = Color(0.11, 0.14, 0.18, 1)
+
+[node name="WallOffice" type="ColorRect" parent="Blocks"]
+offset_left = -860.0
+offset_top = -60.0
+offset_right = -360.0
+offset_bottom = -30.0
+color = Color(0.11, 0.14, 0.18, 1)
+
+[node name="Desk" type="ColorRect" parent="Blocks"]
+offset_left = -700.0
+offset_top = -420.0
+offset_right = -480.0
+offset_bottom = -320.0
+color = Color(0.27, 0.31, 0.37, 1)
+
+[node name="CrateA" type="ColorRect" parent="Blocks"]
+offset_left = -420.0
+offset_top = 250.0
+offset_right = -340.0
+offset_bottom = 330.0
+color = Color(0.27, 0.31, 0.37, 1)
+
+[node name="CrateB" type="ColorRect" parent="Blocks"]
+offset_left = -320.0
+offset_top = 290.0
+offset_right = -240.0
+offset_bottom = 370.0
+color = Color(0.27, 0.31, 0.37, 1)
+
+[node name="ShelfA" type="ColorRect" parent="Blocks"]
+offset_left = 420.0
+offset_top = -470.0
+offset_right = 720.0
+offset_bottom = -420.0
+color = Color(0.27, 0.31, 0.37, 1)
+
+[node name="ShelfB" type="ColorRect" parent="Blocks"]
+offset_left = 420.0
+offset_top = -320.0
+offset_right = 720.0
+offset_bottom = -270.0
+color = Color(0.27, 0.31, 0.37, 1)
+
+[node name="Pedestal" type="ColorRect" parent="Blocks"]
+offset_left = 300.0
+offset_top = -20.0
+offset_right = 360.0
+offset_bottom = 40.0
+color = Color(0.27, 0.31, 0.37, 1)
+
+[node name="Guard" type="Node2D" parent="."]
+position = Vector2(600, 380)
+
+[node name="Flashlight" type="Polygon2D" parent="Guard"]
+color = Color(0.88, 0.92, 0.96, 0.2)
+polygon = PackedVector2Array(0, 0, -360, -140, -360, 120)
+
+[node name="Body" type="Node2D" parent="Guard"]
+script = ExtResource("3_disc")
+color = Color(0.82, 0.85, 0.88, 1)
+
+[node name="Spy" type="Node2D" parent="."]
+position = Vector2(-80, 120)
+script = ExtResource("4_spy")
+
+[node name="Body" type="Node2D" parent="Spy"]
+script = ExtResource("3_disc")
+color = Color(0.05, 0.06, 0.08, 1)
+
+[node name="Camera2D" type="Camera2D" parent="Spy"]
+zoom = Vector2(0.8, 0.8)
+
+[node name="Accents" type="Node2D" parent="."]
+
+[node name="LaserA" type="ColorRect" parent="Accents"]
+offset_left = 10.0
+offset_top = 40.0
+offset_right = 14.0
+offset_bottom = 200.0
+color = Color(0.95, 0.16, 0.12, 1)
+
+[node name="LaserB" type="ColorRect" parent="Accents"]
+offset_left = 26.0
+offset_top = 40.0
+offset_right = 30.0
+offset_bottom = 200.0
+color = Color(0.95, 0.16, 0.12, 1)
+
+[node name="Documents" type="ColorRect" parent="Accents"]
+offset_left = 315.0
+offset_top = -5.0
+offset_right = 345.0
+offset_bottom = 25.0
+color = Color(0.95, 0.16, 0.12, 1)
+
+[node name="GrainOverlay" parent="." instance=ExtResource("1_grain")]
