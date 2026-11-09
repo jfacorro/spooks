@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <!-- Top-down spy in a fedora and overcoat. Faces right (+X), which is
+       rotation 0 in Godot; the head sits on the canvas center, which is the
+       pivot. Drawn at 2x: use a Sprite2D scale of 0.5 (~49 px wide).
+       Proportions follow a real body seen from above: shoulders about twice
+       as wide as they are deep, head centered on them, toes just past the
+       chest. The coat shows as the skirt flaring out behind, with a vent. -->
+  <g id="shoes" fill="#121418">
+    <rect x="80" y="41" width="16" height="12" rx="6"/>
+    <rect x="76" y="75" width="16" height="12" rx="6"/>
+  </g>
+  <ellipse id="coat-skirt" cx="61" cy="64" rx="25" ry="38" fill="#1d2228"/>
+  <rect id="torso" x="43" y="27" width="42" height="74" rx="21" fill="#3a414b"/>
+  <g id="arms" fill="#2c323a">
+    <ellipse cx="64" cy="30" rx="16" ry="10.5"/>
+    <ellipse cx="64" cy="98" rx="16" ry="10.5"/>
+  </g>
+  <g id="hat">
+    <ellipse id="brim" cx="66" cy="64" rx="27" ry="23" fill="#14171c"/>
+    <ellipse id="band" cx="63" cy="64" rx="18" ry="14" fill="#808b98"/>
+    <ellipse id="crown" cx="63" cy="64" rx="15.5" ry="11.5" fill="#2b3139"/>
+    <path id="crease" d="M 51 64 Q 63 61.5 75 64" fill="none" stroke="#111317" stroke-width="2.5" stroke-linecap="round"/>
+    <path id="pinches" d="M 71 56 L 75 58.5 M 71 72 L 75 69.5" fill="none" stroke="#111317" stroke-width="2" stroke-linecap="round"/>
+  </g>
+</svg>

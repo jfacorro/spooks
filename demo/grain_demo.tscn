@@ -4,6 +4,7 @@
 [ext_resource type="Script" uid="uid://7dg6exedug2f" path="res://demo/block_shadows.gd" id="2_shadows"]
 [ext_resource type="Script" uid="uid://dctnxnomo7vqx" path="res://demo/disc.gd" id="3_disc"]
 [ext_resource type="Script" uid="uid://cmd8k1gtdgkfs" path="res://demo/spy.gd" id="4_spy"]
+[ext_resource type="Texture2D" path="res://characters/spy/spy_topdown.svg" id="5_spy_art"]
 
 [node name="GrainDemo" type="Node2D" unique_id=654249822]
 
@@ -135,9 +136,17 @@ color = Color(0.82, 0.85, 0.88, 1)
 position = Vector2(-80, 120)
 script = ExtResource("4_spy")
 
-[node name="Body" type="Node2D" parent="Spy" unique_id=563059812]
-script = ExtResource("3_disc")
-color = Color(0.05, 0.06, 0.08, 1)
+[node name="Shadow" type="Sprite2D" parent="Spy"]
+self_modulate = Color(0, 0, 0.02, 0.45)
+position = Vector2(6, 6)
+scale = Vector2(0.5, 0.5)
+texture_filter = 4
+texture = ExtResource("5_spy_art")
+
+[node name="Body" type="Sprite2D" parent="Spy"]
+scale = Vector2(0.5, 0.5)
+texture_filter = 4
+texture = ExtResource("5_spy_art")
 
 [node name="Camera2D" type="Camera2D" parent="Spy" unique_id=1220477907]
 zoom = Vector2(0.8, 0.8)
