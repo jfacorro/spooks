@@ -100,7 +100,7 @@ Past 20 m the subject can't pick you out, but crowds and corners break your sigh
 
 ## Keeping track
 
-You have contact while the subject is in front of the spy, inside their view, with a clear line of sight within 35 m, or while they show in the dark window the spy is looking at. The street is always drawn, but people and cars only appear inside the spy's sight, so you know where the subject is only while you can actually see them.
+You have contact while the subject is in front of the spy, inside their view, with a clear line of sight within 35 m, or while they show in the dark window the spy is looking at. Either way they also have to be on screen: walking off its edge counts as going out of sight. The screen is about 30 m wide but only 17 m tall, so following up a side street means staying within about 13 m. The street is always drawn, but people and cars only appear inside the spy's sight, so you know where the subject is only while you can actually see them.
 
 When contact breaks:
 
@@ -245,6 +245,7 @@ These are starting points for the first playtest, not final numbers. The prototy
 | Mirror view | The dark window the spy faces, within 45° and 8 m | Shows 18 m into the reflection at the glass, falling to 4 m at 8 m away |
 | Glass checks | 0.5 s tell, 2 s watching; 1 in 4 dark windows once wary, 1 in 2 once suspicious; 10 s apart | |
 | Spy's view | 180°, the last 15° each side fading out | Seen up to the middle of the fade |
+| Contact | Within 35 m and on screen, 0.4 m inside its edge | |
 | Tap to turn | A press under 0.15 s from standing turns on the spot | Holding walks |
 | Window light | ×1.3 noticing in the pool | |
 
