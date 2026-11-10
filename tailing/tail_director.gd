@@ -39,9 +39,17 @@ const COVER_NAMES := {&"peeking": "peeking", &"browsing": "browsing a window", &
 ## Seconds out of contact before the last-seen marker shows, so someone
 ## walking between the spy and the subject doesn't flash it up.
 @export var marker_delay := 0.5
-## The spy sees in a dark window's glass only while standing right at it:
-## in front of it, level with it, and this close.
-@export var mirror_reach := 1.5 * M
+@export_group("Reflections")
+## The spy sees in one dark window at a time: the one they're facing, within
+## this angle either side of where they face and this far away.
+@export var mirror_range := 8.0 * M
+@export_range(0, 90) var mirror_angle_degrees := 45.0
+## How far into the reflection the spy can see, past the glass: this much
+## standing right at it, falling to `mirror_reach_far` at `mirror_range`.
+@export var mirror_reach_near := 18.0 * M
+@export var mirror_reach_far := 4.0 * M
+## Within this distance of the glass the spy sees the most.
+@export var mirror_close := 1.5 * M
 
 @export_group("Being noticed")
 ## Seconds the subject has to see the spy, out in the open and walking, before
@@ -172,6 +180,19 @@ func alert_name() -> String:
 	return ALERT_NAMES[alert]
 
 
+## The dark window the spy is looking at, if any: the one they face, near
+## enough to make out what's in it.
+func mirror_in_view() -> ShopWindow:
+	return Reflections.window_in_view(spy.eye_position(), spy.facing, mirror_range, deg_to_rad(mirror_angle_degrees))
+
+
+## How far into a reflection the spy can see, past the glass, from `distance`
+## px away from it: further back, the glass shows less.
+func mirror_reach_at(distance: float) -> float:
+	var t := clampf((distance - mirror_close) / maxf(mirror_range - mirror_close, 1.0), 0.0, 1.0)
+	return lerpf(mirror_reach_near, mirror_reach_far, t)
+
+
 ## The cover the spy is in, in words, or "" for none. Out of cover, standing
 ## in a window's light shows too: it's a risk rather than cover.
 func cover_name() -> String:
@@ -189,10 +210,10 @@ func _update_contact(delta: float) -> void:
 	var in_range := not subject.is_gone() and eye.distance_to(target) <= contact_range
 	contact = in_range and Occlusion.clear_line(eye, target)
 	mirror_window = null
-	var glass := Reflections.window_in_front(spy.global_position, mirror_reach)
+	var glass := mirror_in_view()
 	if not contact and not subject.is_gone() and glass != null:
-		var path := Reflections.path_length(eye, glass, target)
-		if path >= 0.0 and path <= contact_range:
+		var legs := Reflections.trace(eye, glass, target)
+		if legs.x >= 0.0 and legs.y <= mirror_reach_at(legs.x) and legs.x + legs.y <= contact_range:
 			mirror_window = glass
 			contact = true
 	# When it's only people hiding them, those people throw a shadow.

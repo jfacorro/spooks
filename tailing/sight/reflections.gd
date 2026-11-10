@@ -22,42 +22,60 @@ static func dark_windows_near(point: Vector2, radius: float) -> Array[ShopWindow
 	return found
 
 
-## The dark window `point` is standing at: in front of its glass, level with
-## it and within `reach` of it. Null if none.
-static func window_in_front(point: Vector2, reach: float) -> ShopWindow:
+## The dark window `eye` is looking at: within `max_distance`, with its glass
+## within `half_angle` of `facing`, and `eye` in front of it. Nearer windows,
+## and ones more straight ahead, win. Null if none.
+static func window_in_view(eye: Vector2, facing: float, max_distance: float, half_angle: float) -> ShopWindow:
 	var best: ShopWindow = null
-	var best_distance := reach
+	var best_score := INF
 	for window in ShopWindow.all:
 		if not window.dark:
 			continue
 		var glass := window.segment()
-		if (point - glass[0]).dot(window.street_side()) <= 0.0:
+		if (eye - glass[0]).dot(window.street_side()) <= 0.0:
 			continue
-		var along := glass[1] - glass[0]
-		var t := (point - glass[0]).dot(along) / along.length_squared()
-		if t < 0.0 or t > 1.0:
+		var nearest := Geometry2D.get_closest_point_to_segment(eye, glass[0], glass[1])
+		var distance := nearest.distance_to(eye)
+		if distance > max_distance:
 			continue
-		var d := Geometry2D.get_closest_point_to_segment(point, glass[0], glass[1]).distance_to(point)
-		if d < best_distance:
+		var off := absf(angle_difference(facing, (nearest - eye).angle()))
+		if distance > 1.0 and off > half_angle:
+			continue
+		var score := distance * (1.0 + off / half_angle)
+		if score < best_score:
 			best = window
-			best_distance = d
+			best_score = score
 	return best
+
+
+## How far the glass is from `eye`.
+static func distance_to_glass(eye: Vector2, window: ShopWindow) -> float:
+	var glass := window.segment()
+	return Geometry2D.get_closest_point_to_segment(eye, glass[0], glass[1]).distance_to(eye)
 
 
 ## How far `target` is from `eye` by way of the glass (eye to glass, then
 ## glass to target), or -1 if `eye` can't see `target` in it.
 static func path_length(eye: Vector2, window: ShopWindow, target: Vector2, people := true) -> float:
+	var legs := trace(eye, window, target, people)
+	return legs.x + legs.y if legs.x >= 0.0 else -1.0
+
+
+## The two legs of the path from `eye` to `target` by way of the glass: x from
+## the eye to the glass, y from the glass to the target. (-1, -1) if `eye`
+## can't see `target` in it.
+static func trace(eye: Vector2, window: ShopWindow, target: Vector2, people := true) -> Vector2:
 	var glass := window.segment()
 	var out := window.street_side()
 	if (eye - glass[0]).dot(out) <= 0.0 or (target - glass[0]).dot(out) <= 0.0:
-		return -1.0
+		return Vector2(-1.0, -1.0)
 	var hit: Variant = Geometry2D.segment_intersects_segment(_mirror(eye, glass[0], glass[1]), target, glass[0], glass[1])
 	if hit == null:
-		return -1.0
+		return Vector2(-1.0, -1.0)
 	var on: Vector2 = hit + out * OFF_GLASS
 	if not Occlusion.clear_line(eye, on, people) or not Occlusion.clear_line(on, target, people):
-		return -1.0
-	return eye.distance_to(hit) + hit.distance_to(target)
+		return Vector2(-1.0, -1.0)
+	return Vector2(eye.distance_to(hit), hit.distance_to(target))
 
 
 ## The patch of street `eye` can see in the glass, out to `reach` px from it,
