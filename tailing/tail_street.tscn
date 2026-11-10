@@ -905,9 +905,10 @@ script = ExtResource("5_7wh6k")
 action = 6
 building = NodePath("../../../../Buildings/North13")
 
-[node name="SightShade" type="CanvasGroup" parent="." unique_id=134684129 node_paths=PackedStringArray("eye")]
+[node name="SightShade" type="CanvasGroup" parent="." unique_id=134684129 node_paths=PackedStringArray("eye", "viewer")]
 script = ExtResource("7_wvkha")
 eye = NodePath("../Spy/Eye")
+viewer = NodePath("../Spy")
 
 [node name="MirrorView" type="Node2D" parent="." node_paths=PackedStringArray("director")]
 script = ExtResource("19_mirror")

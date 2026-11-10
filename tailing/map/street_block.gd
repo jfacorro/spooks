@@ -89,6 +89,20 @@ func outline() -> PackedVector2Array:
 	return points
 
 
+## The direction from the doorway out to the street, in global coordinates.
+func door_outward() -> Vector2:
+	match door_side:
+		Side.NORTH:
+			return global_transform.basis_xform(Vector2.UP).normalized()
+		Side.EAST:
+			return global_transform.basis_xform(Vector2.RIGHT).normalized()
+		Side.SOUTH:
+			return global_transform.basis_xform(Vector2.DOWN).normalized()
+		Side.WEST:
+			return global_transform.basis_xform(Vector2.LEFT).normalized()
+	return Vector2.ZERO
+
+
 ## The middle of the doorway's floor, in global coordinates.
 func door_point() -> Vector2:
 	return to_global(door_point_local())

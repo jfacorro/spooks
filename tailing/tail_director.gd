@@ -32,6 +32,9 @@ const COVER_NAMES := {&"peeking": "peeking", &"browsing": "browsing a window", &
 @export_group("Rules")
 ## Beyond this the spy can't make out the subject, even in plain view.
 @export var contact_range := 35.0 * M
+## The subject also has to be on screen, at least this far inside its edge:
+## off screen counts the same as out of sight.
+@export var screen_margin := 0.4 * M
 ## Seconds out of sight before the subject is lost.
 @export var lost_time := 8.0
 ## Seconds a bolting subject must be kept in sight, unseen, for them to calm down.
@@ -201,17 +204,21 @@ func cover_name() -> String:
 	return COVER_NAMES.get(cover, "")
 
 
-# Contact: a clear line from the spy's eyes to the subject, within range, past
-# walls and people, or the subject showing in the dark window the spy is
-# standing at. Out of contact the subject fades out and the lost timer runs.
+# Contact: the subject on screen, in front of the spy inside their view cone,
+# with a clear line from the spy's eyes to them, within range, past walls and
+# people; or on screen and showing in the dark window the spy is looking at. Out of contact the subject fades out and the lost timer runs.
 func _update_contact(delta: float) -> void:
 	var eye := spy.eye_position()
 	var target := subject.global_position
-	var in_range := not subject.is_gone() and eye.distance_to(target) <= contact_range
-	contact = in_range and Occlusion.clear_line(eye, target)
+	var in_range := not subject.is_gone() and eye.distance_to(target) <= contact_range and _on_screen(target)
+	var in_view := spy.sees(target)
+	contact = in_range and in_view and Occlusion.clear_line(eye, target)
+	# The dark window the spy is looking at shows them what's behind it.
 	mirror_window = null
 	var glass := mirror_in_view()
-	if not contact and not subject.is_gone() and glass != null:
+	spy.mirror = glass
+	spy.mirror_reach = mirror_reach_at(Reflections.distance_to_glass(eye, glass)) if glass != null else 0.0
+	if not contact and in_range and glass != null:
 		var legs := Reflections.trace(eye, glass, target)
 		if legs.x >= 0.0 and legs.y <= mirror_reach_at(legs.x) and legs.x + legs.y <= contact_range:
 			mirror_window = glass
@@ -219,7 +226,7 @@ func _update_contact(delta: float) -> void:
 	# When it's only people hiding them, those people throw a shadow.
 	if shade != null:
 		shade.people_in_way.clear()
-		if in_range and not contact and Occlusion.clear_line(eye, target, false):
+		if in_range and in_view and not contact and Occlusion.clear_line(eye, target, false):
 			shade.people_in_way = Occlusion.people_between(eye, target)
 			shade.hidden_at = target
 	if contact:
@@ -269,6 +276,13 @@ func _update_noticing(delta: float) -> void:
 	noticing += notice_rate * delta
 	if noticing >= 1.0:
 		_count_sighting()
+
+
+# Whether `point` is on screen, `screen_margin` inside its edge.
+func _on_screen(point: Vector2) -> bool:
+	var viewport := get_viewport()
+	var shown := viewport.get_canvas_transform().affine_inverse() * viewport.get_visible_rect()
+	return shown.grow(-screen_margin).has_point(point)
 
 
 func _notice_time(distance: float) -> float:
@@ -415,6 +429,7 @@ func _finish(result: Outcome, block: StreetBlock = null) -> void:
 	cover = &""
 	in_light = false
 	mirror_window = null
+	spy.mirror = null
 	noticing = 0.0
 	if shade != null:
 		shade.people_in_way.clear()

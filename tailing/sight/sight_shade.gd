@@ -1,9 +1,10 @@
 class_name SightShade
 extends CanvasGroup
 ## Darkens everything the spy can't see. Each wall edge near the spy throws a
-## shadow quad away from their eyes; the CanvasGroup merges the quads so
-## overlaps don't stack. Roofs are drawn above this layer, so buildings stay
-## solid and only the ground behind them goes dark.
+## shadow quad away from their eyes, and everything behind the spy, outside
+## their view cone, is shaded too, softly at the cone's edges; the CanvasGroup
+## merges it all so overlaps don't stack. Roofs are drawn above this layer, so
+## buildings stay solid and only the ground behind them goes dark.
 ##
 ## People don't shade the street on their own, or a crowd would cover it in
 ## flickering shadows. Only the ones standing between the spy and the subject
@@ -20,6 +21,9 @@ const PERSON_SHADOW_PAST := 4.0 * 48.0
 const PERSON_SHADOW_HALF_WIDTH := 1.0 * 48.0
 
 @export var eye: Node2D
+## Whose view cone to shade outside of (their `facing`, `view_degrees` and
+## `view_soft_degrees`). Without one, only walls shade.
+@export var viewer: TailSpy
 @export_range(0.0, 1.0) var darkness := 0.36
 ## Walls further than this from the eye are skipped; their shadows are off screen.
 @export var reach := 50.0 * 48.0
@@ -76,6 +80,34 @@ func _paint() -> void:
 			]), colors, PackedVector2Array())
 	for person in _person_shade:
 		_person_shadow(e, person.global_position, _person_shade[person])
+	if viewer != null:
+		_cone_shadow(e)
+
+
+# Everything outside the viewer's cone: solid behind them, fading in over the
+# soft band at each edge.
+func _cone_shadow(e: Vector2) -> void:
+	var half := deg_to_rad(viewer.view_degrees) / 2.0
+	var soft := deg_to_rad(viewer.view_soft_degrees)
+	if half + soft >= PI:
+		return
+	var facing := viewer.facing
+	var behind := PackedVector2Array([e])
+	var steps := 24
+	for i in steps + 1:
+		var a := facing + half + soft + (TAU - 2.0 * (half + soft)) * i / steps
+		behind.append(e + Vector2.from_angle(a) * FAR)
+	_painter.draw_colored_polygon(behind, DARK)
+	var bands := 8
+	for side in [-1.0, 1.0]:
+		for i in bands:
+			var a0: float = facing + side * (half + soft * i / bands)
+			var a1: float = facing + side * (half + soft * (i + 1) / bands)
+			_painter.draw_primitive(PackedVector2Array([
+				e, e + Vector2.from_angle(a0) * FAR, e + Vector2.from_angle(a1) * FAR,
+			]), PackedColorArray([
+				Color(DARK, (i + 0.5) / bands), Color(DARK, float(i) / bands), Color(DARK, float(i + 1) / bands),
+			]), PackedVector2Array())
 
 
 # The part of the person's shadow that falls toward the subject: darkest at

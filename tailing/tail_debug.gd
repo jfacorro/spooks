@@ -35,7 +35,8 @@ func _process(_delta: float) -> void:
 		"sightings %d/%d   %s   noticing %3.0f%%  %+.0f%%/s  x%.2f" % [
 			d.sightings, TailDirector.SIGHTINGS_TO_BURN, d.alert_name(), d.noticing * 100.0, d.notice_rate * 100.0, d.modifier],
 		"distance %.1f m (%s)   seen %s" % [d.distance_m(), d.band_name(), "YES" if d.seen else "no"],
-		"contact %s   lost timer %.1f s" % ["yes" if d.contact else "NO", d.lost_timer],
+		"contact %s   subject in view %s   lost timer %.1f s" % [
+			"yes" if d.contact else "NO", "yes" if d.spy.sees(d.subject.global_position) else "no", d.lost_timer],
 		"spy gait %s   cover %s   walking with %d   pace limit %s" % [
 			TailSpy.Gait.keys()[d.spy.gait].to_lower(), d.cover if d.cover != &"" else "none", d.crowd_count,
 			"%.1f m/s" % (d.spy.pace_limit / M) if d.spy.pace_limit < INF else "none"],
