@@ -1,7 +1,7 @@
 extends Node2D
 ## F2: the playtest overlay. Shows the numbers behind sightings and contact, plus
 ## the subject's vision cones and the distance bands around them, even when
-## the subject is out of sight.
+## the subject is out of sight, and the state of the traffic.
 
 const M := 48.0
 const RING := Color(1.0, 0.8, 0.25, 0.55)
@@ -9,6 +9,7 @@ const VISION := Color(1.0, 0.35, 0.3, 0.8)
 
 @export var director: TailDirector
 @export var label: Label
+@export var traffic: Traffic
 
 
 func _ready() -> void:
@@ -48,11 +49,29 @@ func _process(_delta: float) -> void:
 			"yes" if d.mirror_window != null else "no", "yes" if d.subject.is_checking_glass() else "no"],
 		"route: %s" % ", ".join(d.subject.picked_options),
 	])
+	if traffic != null:
+		lines.append(_traffic_line())
 	if d.recovering:
 		lines.append("RECOVERING %.1f / %.0f s" % [d.recovery_progress, d.recovery_time])
 	elif d.recovered:
 		lines.append("recovery used")
 	label.text = "\n".join(lines)
+
+
+# Vehicles, horns, each crossing's lights, and the subject at a crossing.
+func _traffic_line() -> String:
+	var parts := PackedStringArray(["traffic %d   horns %d" % [traffic.vehicles.size(), traffic.horns]])
+	for light: TrafficLight in get_tree().get_nodes_in_group(&"traffic_lights"):
+		parts.append("%s: cars %s, walk %s %.0f s" % [light.name, TrafficLight.Car.keys()[light.car_signal()].to_lower(),
+			TrafficLight.Walk.keys()[light.walk_signal()].to_lower(), light.walk_time_left()])
+	var s := director.subject
+	if s.is_at_curb():
+		parts.append("subject waiting at the curb")
+	elif s.is_dashing():
+		parts.append("subject DASHING")
+	if director.spy.is_down():
+		parts.append("spy KNOCKED DOWN")
+	return "   ".join(parts)
 
 
 func _draw() -> void:

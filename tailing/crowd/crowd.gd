@@ -4,8 +4,9 @@ extends Node2D
 ## children, the shop doors and the shop windows on the map; keeps about
 ## `count` people walking it, coming out of doors and street ends and going
 ## into others; keeps them from walking into each other, walls, the spy and
-## the subject; and makes them stop and stare when the spy runs. The tail
-## director asks it who the spy is walking with.
+## the subject; and makes them stop and stare when the spy runs or a horn goes
+## off nearby. People wait at the curb for the walkers' green before crossing
+## the road. The tail director asks it who the spy is walking with.
 
 const M := 48.0
 const PERSON := preload("res://tailing/actors/pedestrian.tscn")
@@ -24,6 +25,8 @@ const FORMATIONS := {
 const WINDOW_REACH := 2.5 * M
 ## People keep this far from walls and parked cars.
 const WALL_REACH := 0.6 * M
+## People walking near the curb get nudged back from it, this far out.
+const CURB_REACH := 0.4 * M
 const GRID := 1.0 * M
 
 @export var spy: TailSpy
@@ -53,6 +56,8 @@ var _spread := {} # point id -> half-width of the walkway there; 0 for doors
 var _edges: Array[Vector2i] = []
 var _ends := PackedInt64Array() # doors and free walkway ends
 var _windows: Array[Dictionary] = [] # spot: where to stand, glass: where to look
+var _road := Rect2() # the main road, where nobody walks except on a crosswalk
+var _crosswalks: Array[Rect2] = []
 var _people: Array[Pedestrian] = []
 var _wall_push := {} # person -> push away from walls, refreshed in turns
 var _frame := 0
@@ -106,6 +111,21 @@ func people_count() -> int:
 	return _people.size()
 
 
+func people() -> Array[Pedestrian]:
+	return _people
+
+
+## People within `radius` of `at` stop and look at it: only those with a
+## clear view of it if it's something to see (someone running), everyone if
+## it's something to hear (a horn). Anyone out on the road keeps walking.
+func stare_at(at: Vector2, radius: float, heard := false) -> void:
+	for person in _people:
+		if person.global_position.distance_to(at) > radius or _road.has_point(person.global_position):
+			continue
+		if heard or Occlusion.clear_line(at, person.global_position, false):
+			person.stare(at, _rng.randf_range(stare_time.x, stare_time.y))
+
+
 func browse_length() -> float:
 	return _rng.randf_range(browse_time.x, browse_time.y)
 
@@ -120,6 +140,11 @@ func release(person: Pedestrian) -> void:
 # --- The path network ----------------------------------------------------------
 
 func _build_network() -> void:
+	for zone: StreetZone in get_tree().get_nodes_in_group(&"street_zones"):
+		if zone.kind == StreetZone.Kind.ROAD:
+			_road = _area_of(zone)
+		elif zone.kind == StreetZone.Kind.CROSSWALK:
+			_crosswalks.append(_area_of(zone))
 	var walkway_ends := PackedInt64Array()
 	for walkway: Walkway in find_children("*", "Walkway", true, false):
 		var previous := -1
@@ -242,6 +267,7 @@ func _spawn_group(anywhere: bool) -> void:
 	lead.path = walk.path
 	lead.spread = walk.spread
 	lead.stops = walk.stops
+	lead.crossings = _crossings(walk.path)
 	lead.speed = speed
 	# A group's leader keeps well to the right so the followers fit to their left.
 	lead.lane = _rng.randf_range(0.15, 0.85) if size == 1 else _rng.randf_range(0.5, 0.85)
@@ -363,6 +389,26 @@ func _with_window_stops(path: PackedVector2Array, spread: PackedFloat32Array) ->
 	return {"path": new_path, "spread": new_spread, "stops": stops}
 
 
+func _area_of(zone: StreetZone) -> Rect2:
+	var area := Rect2(zone.to_global(zone.polygon[0]), Vector2.ZERO)
+	for p in zone.polygon:
+		area = area.expand(zone.to_global(p))
+	return area
+
+
+# The stretches of a path that cross the road at a crosswalk: the index of the
+# curb point each one starts from -> that crosswalk's lights. Someone who starts
+# out already on a crossing (the first stretch) just carries on.
+func _crossings(path: PackedVector2Array) -> Dictionary:
+	var found := {}
+	for light: TrafficLight in get_tree().get_nodes_in_group(&"traffic_lights"):
+		var area := light.crossing().grow(0.5 * M)
+		for i in range(1, path.size() - 1):
+			if absf(path[i + 1].y - path[i].y) > 3.0 * M and area.has_point((path[i] + path[i + 1]) / 2.0):
+				found[i] = light
+	return found
+
+
 # --- Keeping apart and staring -------------------------------------------------
 
 func _keep_apart() -> void:
@@ -390,6 +436,7 @@ func _keep_apart() -> void:
 		if (i + _frame) % 3 == 0 or not _wall_push.has(person):
 			_wall_push[person] = _from_walls(person)
 		push += _wall_push[person]
+		push += _off_the_road(at)
 		person.avoid = push
 
 
@@ -401,6 +448,21 @@ func _repel(at: Vector2, other: Vector2, space: float) -> Vector2:
 	if distance < 0.01:
 		return Vector2.from_angle(_rng.randf() * TAU) * 0.5
 	return away / distance * (1.0 - distance / space)
+
+
+# People keep to the sidewalk except on a crosswalk: near the curb they're
+# nudged back from it, and anyone who's stepped off it is steered back on.
+func _off_the_road(at: Vector2) -> Vector2:
+	if not _road.grow(CURB_REACH).has_point(at):
+		return Vector2.ZERO
+	for crossing in _crosswalks:
+		if at.x > crossing.position.x - 0.5 * M and at.x < crossing.end.x + 0.5 * M:
+			return Vector2.ZERO
+	var below_top := at.y - _road.position.y
+	var above_bottom := _road.end.y - at.y
+	if below_top < above_bottom:
+		return Vector2.UP * clampf((below_top + CURB_REACH) / CURB_REACH, 0.0, 2.0)
+	return Vector2.DOWN * clampf((above_bottom + CURB_REACH) / CURB_REACH, 0.0, 2.0)
 
 
 # A push away from the nearest wall, plus a nudge to one side when it's dead
@@ -424,11 +486,5 @@ func _from_walls(person: Pedestrian) -> Vector2:
 
 # Running makes people nearby stop and stare at the spy.
 func _startle() -> void:
-	if spy.gait != TailSpy.Gait.RUN:
-		return
-	var at := spy.global_position
-	for person in _people:
-		if person.global_position.distance_to(at) > startle_radius:
-			continue
-		if Occlusion.clear_line(at, person.global_position, false):
-			person.stare(at, _rng.randf_range(stare_time.x, stare_time.y))
+	if spy.gait == TailSpy.Gait.RUN:
+		stare_at(spy.global_position, startle_radius)

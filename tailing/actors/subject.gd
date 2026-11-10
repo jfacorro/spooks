@@ -5,11 +5,17 @@ extends Node2D
 ## they slow down before a full look-back, and they slow down and turn to a
 ## dark shop window before watching the street behind them in its glass. The tail director owns sightings and
 ## sets `alert`; this script only acts on it.
+##
+## At a crosswalk they wait on the curb for the walkers' green, and if it's
+## already blinking when they get there, they dash across before it changes.
+## Once wary they do that on purpose: they hang back on the curb through the
+## green and go at the last moment, so the cars start right behind them. A horn
+## going off nearby makes them glance toward it.
 
 signal entered_building(block: StreetBlock)
 
 enum Alert { CALM, WARY, SUSPICIOUS, BURNED }
-enum Mode { WAIT, WALK, PAUSE, STOP_DEAD, LOOK_TELL, LOOK, LOOK_RESUME, DOUBLE_BACK, ENTER, GONE, GLASS_TELL, GLASS }
+enum Mode { WAIT, WALK, PAUSE, STOP_DEAD, LOOK_TELL, LOOK, LOOK_RESUME, DOUBLE_BACK, ENTER, GONE, GLASS_TELL, GLASS, CURB }
 enum Head { FORWARD, GLANCE_TELL, GLANCE, GLANCE_RETURN }
 
 const M := 48.0
@@ -22,6 +28,10 @@ const ALERT_PACE := [1.0, 1.05, 1.1, 1.1]
 const CHECK_DELAY := [[12.0, 18.0], [6.0, 10.0], [5.0, 8.0], [1.5, 2.5]]
 ## Chance of stopping to check each dark window they pass, by alert level.
 const GLASS_CHANCE := [0.0, 0.25, 0.5, 0.0]
+## Chance of hanging back at a crosswalk to beat the lights on purpose, by alert level.
+const TIME_THE_LIGHT := [0.0, 0.5, 1.0, 0.0]
+## A glance at a horn starts this quickly: it's a reflex.
+const HORN_TELL := 0.15
 
 @export var route: SubjectRoute
 @export var walk_speed := 1.4 * M
@@ -59,6 +69,11 @@ const GLASS_CHANCE := [0.0, 0.25, 0.5, 0.0]
 ## Double back: how far they walk back toward where they came from, in px.
 @export var double_back_min := 10.0 * M
 @export var double_back_max := 20.0 * M
+
+@export_group("Crossing")
+## Beating the lights on purpose, they set off with this many seconds of the
+## walkers' blinking green left.
+@export var dash_at := 1.5
 
 var alert := Alert.CALM
 ## How much of them is drawn, 0 to 1: the tail director fades them out when
@@ -107,6 +122,12 @@ var _glass: ShopWindow # the window they're checking
 var _last_glass := -INF # _time of the last glass check
 var _passed_windows := {} # dark windows already rolled for
 var _door_fade := 1.0
+var _cross_light: TrafficLight # the lights at the crosswalk they're crossing
+var _crossing_pending := false # just got to the curb
+var _await_flash := false # hanging back for the blinking green
+var _dashing := false
+var _turn_to := 0.0 # how far round the current glance goes
+var _tell_length := 0.3 # how long the current glance's tell lasts
 var _rng := RandomNumberGenerator.new()
 
 @onready var _figure: Node2D = $Figure
@@ -122,6 +143,8 @@ func _ready() -> void:
 	_face_target = _facing
 	_trail.append(global_position)
 	_check_timer = _check_delay()
+	_turn_to = deg_to_rad(glance_turn_degrees)
+	_tell_length = glance_tell
 	_cone.draw.connect(_draw_cone)
 	_update_figure(0.0)
 
@@ -133,8 +156,16 @@ func _physics_process(delta: float) -> void:
 			if _mode_time >= start_delay:
 				_set_mode(Mode.WALK)
 		Mode.WALK:
-			_walk(delta, _walking_speed(), (12.0 if _bolting else 3.0) * M)
-			_tick_checks(delta)
+			if _crossing_pending:
+				_start_crossing()
+			if _mode == Mode.WALK:
+				_walk(delta, _walking_speed(), (12.0 if _bolting or _dashing else 3.0) * M)
+				if not _dashing:
+					_tick_checks(delta)
+		Mode.CURB:
+			_speed = 0.0
+			_face_target = (_goal() - global_position).angle()
+			_wait_at_curb()
 		Mode.PAUSE:
 			_speed = 0.0
 			if _mode_time >= _mode_length:
@@ -247,9 +278,38 @@ func is_bolting() -> bool:
 	return _bolting
 
 
+## Dashing across a road to beat the lights.
+func is_dashing() -> bool:
+	return _dashing
+
+
+## Waiting on the curb at a crosswalk.
+func is_at_curb() -> bool:
+	return _mode == Mode.CURB
+
+
+## A horn went off at `at`: they glance toward it straight away, unless it's
+## already in front of them or they're busy looking somewhere.
+func hear_horn(at: Vector2) -> void:
+	if _head != Head.FORWARD:
+		return
+	if not (_mode == Mode.WALK or _mode == Mode.PAUSE or _mode == Mode.CURB):
+		return
+	var turn := angle_difference(_facing, (at - global_position).angle())
+	if absf(turn) <= deg_to_rad(forward_degrees) / 2.0:
+		return
+	glance_count += 1
+	_head_side = signf(turn)
+	_turn_to = minf(absf(turn), deg_to_rad(glance_turn_degrees))
+	_tell_length = HORN_TELL
+	_head = Head.GLANCE_TELL
+	_head_time = 0.0
+
+
 ## They've made the spy: run along the route, glancing back often.
 func bolt() -> void:
 	_bolting = true
+	_crossing_pending = false
 	alert = Alert.BURNED
 	if _mode == Mode.DOUBLE_BACK:
 		_finish_double_back()
@@ -272,7 +332,7 @@ func _set_mode(mode: Mode, length := 0.0) -> void:
 
 
 func _walking_speed() -> float:
-	if _bolting:
+	if _bolting or _dashing:
 		return dash_speed
 	return walk_speed * _route_pace * _nerves_pace * ALERT_PACE[alert]
 
@@ -317,9 +377,17 @@ func _walk(delta: float, target_speed: float, accel: float) -> void:
 
 
 func _arrive(point: Waypoint) -> void:
+	# A dash ends on the far side of the road.
+	_dashing = false
 	if point.action == Waypoint.Action.ENTER:
 		_entering_block = point.building
 		_set_mode(Mode.ENTER)
+		return
+	if point.action == Waypoint.Action.CROSS:
+		# Bolting, they just run across.
+		if not _bolting and point.light != null:
+			_cross_light = point.light
+			_crossing_pending = true
 		return
 	if _bolting or _mode != Mode.WALK:
 		return
@@ -342,6 +410,41 @@ func _arrive(point: Waypoint) -> void:
 			var window := _nearest_dark_window(point.global_position, 3.0 * M)
 			if window != null:
 				_begin_glass(window)
+
+
+# At the curb: go if the walkers have green, unless they're hanging back to
+# beat the lights; run for it if it's blinking; otherwise wait.
+func _start_crossing() -> void:
+	_crossing_pending = false
+	_await_flash = false
+	match _cross_light.walk_signal():
+		TrafficLight.Walk.FLASH:
+			_dashing = true
+		TrafficLight.Walk.WALK:
+			if _times_the_light():
+				_await_flash = true
+				_set_mode(Mode.CURB)
+		_:
+			_set_mode(Mode.CURB)
+
+
+func _wait_at_curb() -> void:
+	match _cross_light.walk_signal():
+		TrafficLight.Walk.WALK:
+			if not _await_flash:
+				if _times_the_light():
+					_await_flash = true
+				else:
+					_set_mode(Mode.WALK)
+		TrafficLight.Walk.FLASH:
+			if not _await_flash or _cross_light.walk_time_left() <= dash_at:
+				_await_flash = false
+				_dashing = true
+				_set_mode(Mode.WALK)
+
+
+func _times_the_light() -> bool:
+	return _rng.randf() < TIME_THE_LIGHT[alert]
 
 
 # Random checks while walking, more often the warier they are.
@@ -433,6 +536,8 @@ func _begin_look() -> void:
 func _begin_glance() -> void:
 	glance_count += 1
 	_head_side = 1.0 if _rng.randf() < 0.5 else -1.0
+	_turn_to = deg_to_rad(glance_turn_degrees)
+	_tell_length = glance_tell
 	_head = Head.GLANCE_TELL
 	_head_time = 0.0
 
@@ -520,14 +625,14 @@ func _update_head(delta: float) -> void:
 			rate = 30.0
 	match _head:
 		Head.GLANCE_TELL:
-			target = _head_side * deg_to_rad(40.0) * smoothstep(0.0, 1.0, _head_time / glance_tell)
+			target = _head_side * minf(deg_to_rad(40.0), _turn_to) * smoothstep(0.0, 1.0, _head_time / _tell_length)
 			rate = 30.0
-			if _head_time >= glance_tell:
+			if _head_time >= _tell_length:
 				_head = Head.GLANCE
 				_head_time = 0.0
 		Head.GLANCE:
 			# A quick but human turn: most of the way round in about 0.2 s.
-			target = _head_side * deg_to_rad(glance_turn_degrees)
+			target = _head_side * _turn_to
 			rate = 14.0
 			if _head_time >= glance_time:
 				_head = Head.GLANCE_RETURN

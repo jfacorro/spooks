@@ -5,11 +5,13 @@ extends Node2D
 ## line, then does its action. An action can be limited to a minimum alert
 ## level and given a chance, so the same route plays out differently as the
 ## subject gets warier. CHECK_GLASS has them stop at the nearest dark shop
-## window and watch the street behind them in its reflection.
+## window and watch the street behind them in its reflection. CROSS goes at the
+## curb before a crosswalk: they wait there for the walkers' green, and dash
+## across if it's about to change.
 
-enum Action { NONE, PAUSE, LOOK_BACK, GLANCE, DOUBLE_BACK, PACE, ENTER, CHECK_GLASS }
+enum Action { NONE, PAUSE, LOOK_BACK, GLANCE, DOUBLE_BACK, PACE, ENTER, CHECK_GLASS, CROSS }
 
-const LETTERS := ["", "P", "L", "G", "D", "S", "E", "R"]
+const LETTERS := ["", "P", "L", "G", "D", "S", "E", "R", "X"]
 const GIZMO := Color(1.0, 0.82, 0.3)
 
 @export var action := Action.NONE:
@@ -28,6 +30,8 @@ const GIZMO := Color(1.0, 0.82, 0.3)
 @export_enum("Calm", "Wary", "Suspicious") var min_alert := 0
 ## ENTER: the building they go into.
 @export var building: StreetBlock
+## CROSS: the lights at the crosswalk; the next waypoint is on the far side.
+@export var light: TrafficLight
 
 
 func _draw() -> void:

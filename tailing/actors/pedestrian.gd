@@ -3,12 +3,13 @@ extends CharacterBody2D
 ## Someone else on the street. Walks from one door or street end to another,
 ## keeping to the right, alone or with a small group whose leader picks the
 ## way; stops at a shop window now and then, and stops to stare at anyone who
-## runs past. They're only drawn where the spy can see them (in front of the
+## runs past or at a horn. At a crosswalk they wait on the curb until the
+## walkers' light is green. They're only drawn where the spy can see them (in front of the
 ## spy, past walls, or in the dark window they're looking at), but they block
 ## sight either way. The Crowd spawns them, plans their walk and keeps them
 ## apart.
 
-enum State { WALK, BROWSE, STARE, GONE }
+enum State { WALK, BROWSE, STARE, GONE, WAIT }
 
 const M := 48.0
 ## A path point counts as reached this close to it.
@@ -24,6 +25,8 @@ var path := PackedVector2Array()
 var spread := PackedFloat32Array()
 ## Shop windows to stop at: path index -> the point on the glass to look at.
 var stops := {}
+## Road crossings: path index of the curb each one starts from -> its lights.
+var crossings := {}
 ## Share of the walkway's half-width they keep to the right of its middle.
 var lane := 0.5
 var speed := 1.4 * M
@@ -48,6 +51,7 @@ var _stuck := 0.0
 var _shown := 0.0
 var _in_sight := false
 var _sight_check := 0.0
+var _light: TrafficLight # the lights they're waiting at
 
 @onready var _body: Sprite2D = $Body
 @onready var _shadow: Sprite2D = $Shadow
@@ -76,6 +80,10 @@ func _physics_process(delta: float) -> void:
 			_steer(Vector2.ZERO, 0.0, delta)
 			if _state_time >= _state_length:
 				_set_state(State.WALK)
+		State.WAIT:
+			_steer(Vector2.ZERO, 0.0, delta)
+			if _light.walk_signal() == TrafficLight.Walk.WALK:
+				_set_state(State.WALK)
 		State.GONE:
 			_steer(Vector2.ZERO, 0.0, delta)
 	if state == State.GONE:
@@ -91,7 +99,7 @@ func _physics_process(delta: float) -> void:
 
 ## Whether they count toward the crowd the spy is hiding in.
 func is_blending() -> bool:
-	return state == State.WALK or state == State.BROWSE
+	return state == State.WALK or state == State.BROWSE or state == State.WAIT
 
 
 ## Stop and look at `at` for at least `seconds` (someone just ran past).
@@ -118,6 +126,14 @@ func _walk(delta: float) -> void:
 	if _next >= path.size():
 		leave()
 		return
+	# Still on the curb of a crossing: wait for the walkers' green. Once
+	# they've stepped off, they carry on whatever the light does.
+	var light: TrafficLight = crossings.get(_next - 1)
+	if light != null and light.walk_signal() != TrafficLight.Walk.WALK 			and global_position.distance_to(path[_next - 1]) < 2.0 * ARRIVE:
+		_light = light
+		_look_at = path[_next]
+		_set_state(State.WAIT)
+		return
 	var target := _target(_next)
 	if global_position.distance_to(target) < ARRIVE:
 		var stop: Variant = stops.get(_next)
@@ -132,7 +148,12 @@ func _walk(delta: float) -> void:
 			leave()
 			return
 		target = _target(_next)
-	_steer(target - global_position, speed, delta)
+	# Out on a crossing they hurry, and hurry more once the light's against them.
+	var pace := speed
+	if crossings.has(_next - 1):
+		var walk_on: bool = crossings[_next - 1].walk_signal() == TrafficLight.Walk.WALK
+		pace = maxf(speed, (1.6 if walk_on else 2.0) * M)
+	_steer(target - global_position, pace, delta)
 	# Someone standing in the way for too long: try the next point, then give up.
 	if velocity.length() < 0.15 * M:
 		_stuck += delta
@@ -182,7 +203,7 @@ func _steer(to: Vector2, pace: float, delta: float) -> void:
 
 func _face(delta: float) -> void:
 	var want := heading
-	if state == State.BROWSE or state == State.STARE:
+	if state == State.BROWSE or state == State.STARE or state == State.WAIT:
 		want = (_look_at - global_position).angle()
 	elif velocity.length() > 0.2 * M:
 		want = velocity.angle()

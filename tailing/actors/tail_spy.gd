@@ -19,6 +19,9 @@ extends CharacterBody2D
 ## spy sees from the Eye node, which moves out past the corner while they peek,
 ## so sight shading and contact work around corners; the subject can then only
 ## see the leaning head.
+##
+## A car that can't stop in time knocks the spy down: they lie in the road for
+## a few seconds, unable to move, before getting up again.
 
 enum Gait { STILL, WALK, HURRY, RUN }
 enum WallEnd { CONVEX, CONCAVE, CONTINUES }
@@ -78,6 +81,7 @@ var _hold := 0.0 # how long the current direction has been held
 var _turning_on_spot := false
 var _look_to := INF # the way the spy is turning to face, or INF to stay put
 var _settling := false # just let go of the controls after walking
+var _down := 0.0 # seconds left lying in the road after being hit
 
 @onready var _body: Node2D = $Body
 @onready var _shadow: Node2D = $Shadow
@@ -89,6 +93,9 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if _down > 0.0:
+		_lie_in_road(delta)
+		return
 	var direction := Vector2.ZERO
 	if not frozen:
 		direction = Input.get_vector("move_left", "move_right", "move_up", "move_down")
@@ -122,6 +129,21 @@ func _physics_process(delta: float) -> void:
 	_time += delta
 	_ring = move_toward(_ring, 1.0 if spotted else 0.0, (10.0 if spotted else 3.0) * delta)
 	queue_redraw()
+
+
+## Hit by a car going `push`'s way: down for `seconds`, lying along the road.
+func knock_down(seconds: float, push: Vector2) -> void:
+	_down = seconds
+	_let_go()
+	_browsing = null
+	_look_to = INF
+	gait = Gait.STILL
+	facing = push.angle()
+	velocity = push.normalized() * 2.0 * M
+
+
+func is_down() -> bool:
+	return _down > 0.0
 
 
 ## Where the spy sees from: their head, which leans out past corners.
@@ -218,6 +240,26 @@ func _speed() -> float:
 		Gait.HURRY:
 			return hurry_speed
 	return minf(walk_speed, pace_limit)
+
+
+# Knocked down: sliding to a stop and lying there, stretched out along the
+# road, until the time's up.
+func _lie_in_road(delta: float) -> void:
+	_down = maxf(_down - delta, 0.0)
+	velocity = velocity.move_toward(Vector2.ZERO, 8.0 * M * delta)
+	move_and_slide()
+	var lying := Vector2(0.7, 0.4) if _down > 0.0 else Vector2(0.5, 0.5)
+	_body.scale = lying
+	_shadow.scale = lying
+	_place_eye()
+	_body.rotation = facing
+	_shadow.rotation = facing
+	_body.position = Vector2.ZERO
+	_shadow.position = Vector2(6, 6)
+	_lean = Vector2.ZERO
+	_time += delta
+	_ring = move_toward(_ring, 1.0 if spotted else 0.0, (10.0 if spotted else 3.0) * delta)
+	queue_redraw()
 
 
 # --- Browsing a shop window ---------------------------------------------------

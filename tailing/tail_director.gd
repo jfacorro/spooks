@@ -197,8 +197,11 @@ func mirror_reach_at(distance: float) -> float:
 
 
 ## The cover the spy is in, in words, or "" for none. Out of cover, standing
-## in a window's light shows too: it's a risk rather than cover.
+## in a window's light shows too: it's a risk rather than cover. So does lying
+## in the road after being hit by a car.
 func cover_name() -> String:
+	if spy.is_down():
+		return "knocked down"
 	if cover == &"" and in_light:
 		return "in the light"
 	return COVER_NAMES.get(cover, "")

@@ -1,6 +1,7 @@
 class_name Occlusion
 ## Everything that blocks sight on the street. Buildings and street props
-## register their outline here, and people register themselves as small discs;
+## register their outline here, traffic moves its outlines about every frame,
+## and people register themselves as small discs;
 ## the spy's sight shading, contact, and the subject's vision all ask the same
 ## questions of it, so sight is always symmetric: if A can't see B, B can't
 ## see A. A person standing at either end of a line doesn't block it.
@@ -11,14 +12,28 @@ const PERSON_RADIUS := 0.3 * 48.0
 static var _owners: Array[Object] = []
 static var _shapes: Array[PackedVector2Array] = []
 static var _bounds: Array[Rect2] = []
+static var _moving: Array[bool] = []
 static var _people: Array[Node2D] = []
 
 
-static func register(owner: Object, outline: PackedVector2Array) -> void:
+static func register(owner: Object, outline: PackedVector2Array, moving := false) -> void:
 	unregister(owner)
 	_owners.append(owner)
 	_shapes.append(outline)
 	_bounds.append(_bounds_of(outline))
+	_moving.append(moving)
+
+
+## Puts a blocker that drives about (a car, a bus) at its new outline,
+## registering it the first time. Things that move block sight like anything
+## else, but they aren't walls: nobody puts their back to one or steers along it.
+static func move(owner: Object, outline: PackedVector2Array) -> void:
+	var i := _owners.find(owner)
+	if i < 0:
+		register(owner, outline, true)
+		return
+	_shapes[i] = outline
+	_bounds[i] = _bounds_of(outline)
 
 
 static func unregister(owner: Object) -> void:
@@ -27,6 +42,7 @@ static func unregister(owner: Object) -> void:
 		_owners.remove_at(i)
 		_shapes.remove_at(i)
 		_bounds.remove_at(i)
+		_moving.remove_at(i)
 
 
 static func add_person(person: Node2D) -> void:
@@ -49,15 +65,16 @@ static func shapes_near(at: Vector2, radius: float) -> Array[PackedVector2Array]
 	return near
 
 
-## Whether `point` is inside any solid blocker.
+## Whether `point` is inside any wall or prop (traffic doesn't count).
 static func is_solid(point: Vector2) -> bool:
 	for i in _shapes.size():
-		if _bounds[i].has_point(point) and Geometry2D.is_point_in_polygon(point, _shapes[i]):
+		if not _moving[i] and _bounds[i].has_point(point) and Geometry2D.is_point_in_polygon(point, _shapes[i]):
 			return true
 	return false
 
 
-## The solid wall edge nearest to `point`, within `max_distance`: a Dictionary
+## The wall or prop edge nearest to `point`, within `max_distance` (traffic
+## doesn't count): a Dictionary
 ## with the blocker's outline ("shape"), the edge's start index ("index"), the
 ## nearest point on it ("point") and how far that is ("distance"). Empty if
 ## nothing is that close.
@@ -66,7 +83,7 @@ static func nearest_edge(point: Vector2, max_distance: float) -> Dictionary:
 	var best_distance := max_distance
 	var area := Rect2(point, Vector2.ZERO).grow(max_distance)
 	for i in _shapes.size():
-		if not _bounds[i].intersects(area):
+		if _moving[i] or not _bounds[i].intersects(area):
 			continue
 		var shape := _shapes[i]
 		var count := shape.size()
