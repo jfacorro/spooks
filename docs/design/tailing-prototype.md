@@ -74,7 +74,7 @@ Past 20 m the subject can't pick you out, but crowds and corners break your sigh
 
 **Glances.** A glance is too short for the per-second rate to add up to much, so being caught by one also adds heat at once: +8 in the tail zone and +15 when close. Inside 4 m the +40 applies instead. Modifiers and familiar face multiply it like the rate.
 
-**Modifiers** multiply the rate for your distance band:
+**Modifiers** multiply the rate for your distance band. Cover (peeking, a crowd, a doorway) takes the place of how fast you're moving; hurrying or running takes you out of a crowd or doorway. Walking in a crowd also keeps you to its pace.
 
 | What you are doing when seen | Heat rate |
 | --- | --- |
@@ -91,7 +91,7 @@ Past 20 m the subject can't pick you out, but crowds and corners break your sigh
 
 **Cooling off.** Heat drops 2 per second while you are unseen, but never below the floor of the state it has reached.
 
-**Line of sight.** Walls, parked cars, buses and kiosks block sight in both directions. Each pedestrian blocks a small disc, so a thick crowd hides you and also hides the subject.
+**Line of sight.** Walls, parked cars, buses and kiosks block sight in both directions. Each pedestrian blocks a disc about as wide as their shoulders, so a thick crowd hides you and also hides the subject. Someone standing right on either end of the line doesn't count.
 
 ## Keeping track
 
@@ -99,7 +99,7 @@ You have contact while the spy has a clear line of sight to the subject within 3
 
 When contact breaks:
 
-- A last-seen marker stays where you last saw the subject, with an arrow for their heading.
+- The subject fades out, and after half a second a last-seen marker appears where you last saw them, with an arrow for their heading. The delay keeps someone walking past from flashing it up.
 - An 8 s lost timer starts, shown as a ring shrinking around the marker.
 - Seeing the subject again, even for a moment, refills the timer.
 - If the timer runs out, the subject is lost and the attempt restarts at the last checkpoint.
@@ -120,6 +120,10 @@ Cover either breaks the subject's line of sight or makes you look like part of t
 | Opposite sidewalk | Tail in parallel from across the road | Traffic blocks your view, and crossing back is risky |
 
 Pedestrians walk in sidewalk lanes, wait at lights, and bunch up at shops, stairs and turnstiles. When the spy runs, the people nearby stop and turn to look, which breaks the crowd cover around you.
+
+**Hugging walls and peeking.** Press E next to a wall, parked car or kiosk to put your back to it, and sidestep along it; building fronts carry on from one block to the next. At an outside corner, keep pushing toward it to lean out: you see from your leaning head, so the street round the corner opens up, and the subject can only see that head. Stepping away from the wall, running or pressing E again lets go. Doorway walls work too, so you can peek out of a doorway.
+
+**How the crowd works (step 2).** About 100 people walk alone or in groups of two to four, keeping to the right of walkways laid along the sidewalks, over the crosswalks and up the side street. They come out of shop doors and in from the street ends and head for another door or end, sometimes stopping at a shop window on the way. Walking with three or more people within 2 m who are going your way counts as a crowd; people staring at you don't count.
 
 ## Reflections
 
@@ -176,6 +180,9 @@ The spy moves the same way as in the demo: 8-way movement, with the body turning
 - The subject's red briefcase passes through the colour grade untouched.
 - Look-back cones and reflection wedges are pale and translucent, like the flashlight in the demo.
 - Heat shows on a slim meter at the top of the screen, with ticks where the subject turns wary and suspicious. While the subject is looking right at the spy, the meter says SEEN, the cone that caught them brightens, and a ring pulses around the spy. Grain and vignette also tighten as heat rises, and the subject's posture changes with each state.
+- The cover you're in shows under the middle of the meter: "in a crowd", "in a doorway" or "peeking". People, parked cars and kiosks cut shadows out of the subject's cone, so you can see who's hiding you.
+- Parked cars and kiosks shade the street behind them like walls do. People don't, or a crowd would cover the street in flickering shadows; only the people hiding the subject from you throw a soft streak of shadow toward where the subject is.
+- While you hug a wall, a pale line runs along it at your back.
 - The heat meter, the last-seen marker and its lost-timer ring are the only HUD. A debug overlay on F2 shows exact heat and bands for playtesting.
 
 ## Prototype scope
@@ -185,8 +192,8 @@ Build it in five steps. Each one is playable and answers one question before the
 | Step | Adds | Playtest question |
 | --- | --- | --- |
 | 1. One street | Grey-box street with one corner, the subject's route with look-backs and tells, heat, contact, the lost timer, spy movement, restart | Is keeping the distance fun with nothing else in the way? |
-| 2. Crowd and cover | Pedestrians, crowd blending, doorways, corner peeks, parked cars | Does the crowd make the tail easier and harder at the same time? |
-| 3. Reflections | Dark and lit windows, the subject's reflection checks, the spy's reflection view | Can players read the wedge from above without being told? |
+| 2. Crowd and cover | Pedestrians, crowd blending, doorways, corner peeks, parked cars and kiosks | Does the crowd make the tail easier and harder at the same time? |
+| 3. Reflections | Dark and lit windows, the subject's reflection checks, browsing a window, the spy's reflection view | Can players read the wedge from above without being told? |
 | 4. Traffic | Road lanes, cars and a bus as moving blockers, lights, horns, the subject's dash | Is running through traffic a real choice rather than the only one? |
 | 5. Stairs, bridge, subway | Stairs between levels, the open bridge, turnstiles, the train and its doors, and the ending: seeing which building the subject enters | Do the last beats feel different from the street? |
 
@@ -215,6 +222,13 @@ These are starting points for the first playtest, not final numbers. The prototy
 | Train doors | Open 8 s | Chime 2 s before they close |
 | Checkpoints | Start of each beat | |
 | Recovery time | 10 s | Configurable per mission |
+| People on the street | 100 | Groups of 1 to 4: 30%, 25%, 25%, 20% |
+| A person's sight blocker | 0.3 m radius | About shoulder width from above |
+| Crowd | 3 people within 2 m, going your way | |
+| Running startles | People within 6 m, for 1.5 to 2.5 s | |
+| Parked cars | About one every 30 m on each curb | None at the crosswalks or across from the side street |
+| Hugging a wall | 1 m/s sidestep; the head leans 0.35 m past a corner | |
+| Last-seen marker delay | 0.5 s | |
 
 ## Open questions
 

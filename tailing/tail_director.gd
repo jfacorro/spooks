@@ -1,9 +1,10 @@
 class_name TailDirector
 extends Node
 ## Runs one tail: heat (how suspicious the subject is of the spy), contact
-## (whether the spy can still see the subject), and how the attempt ends. Heat
-## shows on the heat meter, and through grain, vignette and the subject's
-## posture. F2 shows the exact numbers for playtesting; R restarts any time.
+## (whether the spy can still see the subject), cover, and how the attempt
+## ends. Heat shows on the heat meter, and through grain, vignette and the
+## subject's posture; the cover the spy is in shows under the meter. F2 shows
+## the exact numbers for playtesting; R restarts any time.
 
 enum Outcome { NONE, LOST, MADE, DONE }
 
@@ -14,10 +15,13 @@ const BAND_NAMES := ["too close", "close", "tail zone", "far", "lost"]
 ## Heat never cools below the floor of the alert level it has reached.
 const FLOORS := [0.0, 40.0, 70.0, 100.0]
 const ALERT_NAMES := ["calm", "wary", "suspicious", "burned"]
-const INTRO := "Tail the subject in the grey coat to wherever they're going.\nDon't let them see you, and don't lose them.\n\nWASD / arrows walk   Shift hurry   Space run   R restart   F2 debug"
+const INTRO := "Tail the subject in the grey coat to wherever they're going.\nDon't let them see you, and don't lose them.\n\nWASD / arrows walk   Shift hurry   Space run   E hug a wall, push on to peek   R restart   F2 debug"
+const COVER_NAMES := {&"peeking": "peeking", &"doorway": "in a doorway", &"crowd": "in a crowd"}
 
 @export var subject: Subject
 @export var spy: TailSpy
+@export var crowd: Crowd
+@export var shade: SightShade
 @export var grain: CanvasLayer
 @export var marker: LastSeenMarker
 @export var message: Label
@@ -42,6 +46,19 @@ const INTRO := "Tail the subject in the grey coat to wherever they're going.\nDo
 @export var familiar_step := 0.25
 ## Seconds unseen before the next sighting counts as a separate one.
 @export var separate_sighting_after := 5.0
+## Seconds out of contact before the last-seen marker shows, so someone
+## walking between the spy and the subject doesn't flash it up.
+@export var marker_delay := 0.5
+
+@export_group("Cover")
+## Heat rates while seen in each kind of cover. Cover takes the place of how
+## fast the spy is moving; hurrying or running leaves the crowd and doorways.
+@export var peek_rate := 0.2
+@export var crowd_rate := 0.3
+@export var doorway_rate := 0.5
+## Walking with at least this many people within `crowd_radius` is a crowd.
+@export var crowd_size := 3
+@export var crowd_radius := 2.0 * M
 
 var heat := 0.0
 var alert := Subject.Alert.CALM
@@ -58,8 +75,13 @@ var recovery_progress := 0.0
 ## For the debug overlay: the last heat rate and the modifier behind it.
 var heat_rate := 0.0
 var modifier := 1.0
+## The cover the spy is in: &"peeking", &"doorway", &"crowd" or &"" for none.
+var cover := &""
+## How many people the spy is walking with.
+var crowd_count := 0
 
 var _unseen_for := INF
+var _out_of_contact := 0.0
 var _jolted := false
 var _glance_hit := -1
 var _unseen_since_bolt := false
@@ -93,6 +115,9 @@ func _physics_process(delta: float) -> void:
 func _process(delta: float) -> void:
 	_clock += delta
 	message.modulate.a = clampf(_message_until - _clock, 0.0, 1.0)
+	# The subject fades rather than blinks when someone steps in the way.
+	if outcome == Outcome.NONE:
+		subject.shown = move_toward(subject.shown, 1.0 if contact else 0.0, 6.0 * delta)
 	# Heat shows as a coarser, tighter picture.
 	_shown_heat = lerpf(_shown_heat, heat / 100.0, 1.0 - exp(-2.0 * delta))
 	var material: ShaderMaterial = grain.get_node("Screen").material
@@ -122,37 +147,51 @@ func alert_name() -> String:
 	return ALERT_NAMES[alert]
 
 
+## The cover the spy is in, in words, or "" for none.
+func cover_name() -> String:
+	return COVER_NAMES.get(cover, "")
+
+
 ## Heat never cools below this at the current alert level.
 func heat_floor() -> float:
 	return FLOORS[alert]
 
 
-# Contact: a clear line from the spy to the subject, within range. Out of
-# contact the subject isn't drawn and the lost timer runs.
+# Contact: a clear line from the spy's eyes to the subject, within range, past
+# walls and people. Out of contact the subject fades out and the lost timer
+# runs.
 func _update_contact(delta: float) -> void:
-	var eye := spy.global_position
+	var eye := spy.eye_position()
 	var target := subject.global_position
-	contact = not subject.is_gone() \
-		and eye.distance_to(target) <= contact_range \
-		and Occlusion.clear_line(eye, target)
-	subject.visible = contact
+	var in_range := not subject.is_gone() and eye.distance_to(target) <= contact_range
+	contact = in_range and Occlusion.clear_line(eye, target)
+	# When it's only people hiding them, those people throw a shadow.
+	if shade != null:
+		shade.people_in_way.clear()
+		if in_range and not contact and Occlusion.clear_line(eye, target, false):
+			shade.people_in_way = Occlusion.people_between(eye, target)
+			shade.hidden_at = target
 	if contact:
+		_out_of_contact = 0.0
 		known_position = target
 		known_heading = subject.heading()
 		lost_timer = lost_time
 		if subject.is_entering():
 			_saw_entering = true
 	else:
+		_out_of_contact += delta
 		lost_timer -= delta
 		if lost_timer <= 0.0:
 			_finish(Outcome.LOST)
 			return
-	marker.visible = not contact
+	marker.visible = not contact and _out_of_contact >= marker_delay
 	marker.place(known_position, known_heading, lost_timer / lost_time)
 
 
 func _update_heat(delta: float) -> void:
-	seen = subject.can_see(spy.global_position)
+	_update_cover()
+	# While peeking only the head shows round the corner.
+	seen = subject.can_see(spy.eye_position())
 	spy.spotted = seen
 	heat_rate = 0.0
 	if seen:
@@ -200,18 +239,58 @@ func _band_rate(distance: float) -> float:
 	return 0.0
 
 
-# What the spy is doing when seen multiplies the rate for their band.
+# Peeking beats a doorway, which beats a crowd. Walking in a crowd also keeps
+# the spy to its pace.
+func _update_cover() -> void:
+	var walking := spy.gait == TailSpy.Gait.STILL or spy.gait == TailSpy.Gait.WALK
+	var with: Array[Pedestrian] = []
+	if walking and not spy.is_hugging() and crowd != null:
+		with = crowd.walking_with(spy.global_position, spy.velocity, crowd_radius)
+	crowd_count = with.size()
+	cover = &""
+	if spy.is_peeking():
+		cover = &"peeking"
+	elif walking and _in_doorway(spy.global_position):
+		cover = &"doorway"
+	elif crowd_count >= crowd_size:
+		cover = &"crowd"
+	spy.pace_limit = INF
+	if cover == &"crowd" and spy.gait == TailSpy.Gait.WALK:
+		var pace := 0.0
+		for person in with:
+			pace += person.velocity.length()
+		# A touch faster than them, so the spy can still drift through the group.
+		spy.pace_limit = pace / with.size() + 0.1 * M
+
+
+func _in_doorway(point: Vector2) -> bool:
+	for block in get_tree().get_nodes_in_group(&"street_blocks"):
+		if block.doorway_contains(point):
+			return true
+	return false
+
+
+# What the spy is doing when seen multiplies the rate for their band: the cover
+# they're in, or else how fast they're moving.
 func _modifier() -> float:
 	var m := 1.0
-	match spy.gait:
-		TailSpy.Gait.RUN:
-			m = 3.0
-		TailSpy.Gait.HURRY:
-			m = 1.5
-		TailSpy.Gait.STILL:
-			var toward := (subject.global_position - spy.global_position).angle()
-			if absf(angle_difference(spy.facing, toward)) < PI / 4.0:
-				m = 1.5
+	match cover:
+		&"peeking":
+			m = peek_rate
+		&"doorway":
+			m = doorway_rate
+		&"crowd":
+			m = crowd_rate
+		_:
+			match spy.gait:
+				TailSpy.Gait.RUN:
+					m = 3.0
+				TailSpy.Gait.HURRY:
+					m = 1.5
+				TailSpy.Gait.STILL:
+					var toward := (subject.global_position - spy.global_position).angle()
+					if absf(angle_difference(spy.facing, toward)) < PI / 4.0:
+						m = 1.5
 	var spy_side := _sidewalk_side(spy.global_position)
 	var subject_side := _sidewalk_side(subject.global_position)
 	if spy_side != &"" and subject_side != &"" and spy_side != subject_side:
@@ -268,6 +347,9 @@ func _finish(result: Outcome, block: StreetBlock = null) -> void:
 	outcome = result
 	spy.frozen = true
 	spy.spotted = false
+	cover = &""
+	if shade != null:
+		shade.people_in_way.clear()
 	marker.visible = false
 	_message_until = INF
 	match result:

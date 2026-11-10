@@ -8,6 +8,7 @@ radius = 16.0
 
 [node name="Spy" type="CharacterBody2D"]
 z_index = 8
+collision_mask = 5
 motion_mode = 1
 script = ExtResource("1_script")
 
@@ -25,3 +26,5 @@ texture = ExtResource("2_art")
 scale = Vector2(0.5, 0.5)
 texture_filter = 4
 texture = ExtResource("2_art")
+
+[node name="Eye" type="Node2D" parent="."]

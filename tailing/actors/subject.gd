@@ -52,6 +52,9 @@ const CHECK_DELAY := [[12.0, 18.0], [6.0, 10.0], [5.0, 8.0], [1.5, 2.5]]
 @export var double_back_max := 20.0 * M
 
 var alert := Alert.CALM
+## How much of them is drawn, 0 to 1: the tail director fades them out when
+## the spy loses sight of them.
+var shown := 1.0
 ## Goes up by one each time they start a glance, so each glance can be told apart.
 var glance_count := 0
 ## Names of the route options picked at each fork this attempt.
@@ -88,6 +91,7 @@ var _seen_by: Array[String] = [] # kinds of cone that saw the last point checked
 var _spot_glow := 0.0
 var _time := 0.0
 var _entering_block: StreetBlock
+var _door_fade := 1.0
 var _rng := RandomNumberGenerator.new()
 
 @onready var _figure: Node2D = $Figure
@@ -140,7 +144,7 @@ func _physics_process(delta: float) -> void:
 		Mode.DOUBLE_BACK:
 			_double_back(delta)
 		Mode.ENTER:
-			modulate.a = 1.0 - _mode_time / 0.5
+			_door_fade = 1.0 - _mode_time / 0.5
 			if _mode_time >= 0.5:
 				_set_mode(Mode.GONE)
 				entered_building.emit(_entering_block)
@@ -149,6 +153,8 @@ func _physics_process(delta: float) -> void:
 	_update_head(delta)
 	_update_figure(delta)
 	_update_cone(delta)
+	modulate.a = clampf(_door_fade, 0.0, 1.0) * shown
+	visible = modulate.a > 0.01
 
 
 ## The cones the subject is watching through right now, each a Dictionary with
@@ -495,7 +501,8 @@ func _update_cone(delta: float) -> void:
 func _draw_cone() -> void:
 	if _cone_alpha <= 0.0 or _cone_shape.is_empty():
 		return
-	var fan := Occlusion.fan(global_position, _cone_shape.angle, _cone_shape.half, _cone_shape.range)
+	# Fine enough that the shadow behind each person shows as a clean notch.
+	var fan := Occlusion.fan(global_position, _cone_shape.angle, _cone_shape.half, _cone_shape.range, 144)
 	var pulse := 0.75 + 0.25 * sin(_time * 16.0)
 	var tint := Color(CONE_COLOR, CONE_COLOR.a * _cone_alpha * (1.0 + SPOTTED_BOOST * _spot_glow * pulse))
 	var colors := PackedColorArray([tint, tint, tint])

@@ -4,7 +4,8 @@ extends Control
 ## they turn wary and suspicious. The part below the current level's floor is
 ## solid because it won't cool off; the rest is fainter and drains while the
 ## spy stays unseen. While the subject is looking right at the spy, the bar
-## pulses and says SEEN, so it's always clear when a look is counting.
+## pulses and says SEEN, so it's always clear when a look is counting. The
+## cover the spy is in (a crowd, a doorway, peeking) shows in the middle.
 
 const PALE := Color(0.93, 0.95, 0.98)
 const TRACK := Color(0.02, 0.03, 0.05, 0.6)
@@ -17,6 +18,8 @@ const FONT_SIZE := 15
 var _shown := 0.0
 var _glow := 0.0
 var _time := 0.0
+var _cover := ""
+var _cover_alpha := 0.0
 
 
 func _ready() -> void:
@@ -27,6 +30,12 @@ func _process(delta: float) -> void:
 	_time += delta
 	_shown = lerpf(_shown, director.heat, 1.0 - exp(-10.0 * delta))
 	_glow = move_toward(_glow, 1.0 if director.seen else 0.0, (8.0 if director.seen else 2.5) * delta)
+	# The cover word fades out, and in again when it changes.
+	var cover := director.cover_name()
+	if cover != "" and cover != _cover and _cover_alpha <= 0.0:
+		_cover = cover
+	var showing := cover != "" and cover == _cover
+	_cover_alpha = move_toward(_cover_alpha, 0.8 if showing else 0.0, 4.0 * delta)
 	queue_redraw()
 
 
@@ -46,6 +55,8 @@ func _draw() -> void:
 	var font := ThemeDB.fallback_font
 	var text_y := HEIGHT + 24.0
 	_text(font, Vector2(bar.position.x, text_y), _level_text(), HORIZONTAL_ALIGNMENT_LEFT, 1.0)
+	if _cover_alpha > 0.0 and not director.recovering:
+		_text(font, Vector2(bar.position.x, text_y), _cover, HORIZONTAL_ALIGNMENT_CENTER, _cover_alpha)
 	if _glow > 0.0:
 		_text(font, Vector2(bar.position.x, text_y), "SEEN", HORIZONTAL_ALIGNMENT_RIGHT, _glow)
 	if director.recovering:

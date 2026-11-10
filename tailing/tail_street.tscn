@@ -4,18 +4,18 @@
 [ext_resource type="Script" path="res://tailing/map/street_block.gd" id="2_g3ifm"]
 [ext_resource type="Script" path="res://tailing/map/shop_window.gd" id="3_gssxx"]
 [ext_resource type="Script" path="res://tailing/route/subject_route.gd" id="4_e26kv"]
+[ext_resource type="Script" path="res://tailing/map/street_prop.gd" id="4_g3ifm"]
 [ext_resource type="Script" path="res://tailing/route/waypoint.gd" id="5_7wh6k"]
+[ext_resource type="Script" path="res://tailing/crowd/crowd.gd" id="5_gssxx"]
+[ext_resource type="Script" path="res://tailing/crowd/walkway.gd" id="6_e26kv"]
 [ext_resource type="Script" path="res://tailing/route/route_branch.gd" id="6_mdqde"]
 [ext_resource type="Script" path="res://tailing/sight/sight_shade.gd" id="7_wvkha"]
 [ext_resource type="PackedScene" path="res://tailing/actors/subject.tscn" id="8_rwp7t"]
-[ext_resource type="Script" path="res://tailing/actors/subject.gd" id="9_2fbfx"]
 [ext_resource type="PackedScene" path="res://tailing/actors/tail_spy.tscn" id="10_2wbg1"]
-[ext_resource type="Script" path="res://tailing/actors/tail_spy.gd" id="11_hgsas"]
 [ext_resource type="Script" path="res://tailing/sight/last_seen_marker.gd" id="12_qn7up"]
 [ext_resource type="Script" path="res://tailing/tail_debug.gd" id="13_ivork"]
 [ext_resource type="Script" path="res://tailing/tail_camera.gd" id="14_3gca0"]
 [ext_resource type="PackedScene" path="res://post_process/grain_overlay.tscn" id="15_12x4t"]
-[ext_resource type="Script" path="res://post_process/grain_overlay.gd" id="16_n4d3w"]
 [ext_resource type="Script" path="res://tailing/tail_director.gd" id="17_qui2e"]
 [ext_resource type="Script" path="res://tailing/hud/heat_meter.gd" id="18_heat"]
 
@@ -605,7 +605,132 @@ position = Vector2(952, 0)
 rotation = 3.1415927
 script = ExtResource("3_gssxx")
 
+[node name="Props" type="Node2D" parent="." unique_id=1799400676]
+
+[node name="NorthCar01" type="StaticBody2D" parent="Props" unique_id=467646437]
+position = Vector2(-1525.5698, 6)
+rotation = 3.1415927
+script = ExtResource("4_g3ifm")
+
+[node name="NorthCar02" type="StaticBody2D" parent="Props" unique_id=1408320754]
+position = Vector2(-638.25024, 6)
+rotation = 3.1415927
+script = ExtResource("4_g3ifm")
+
+[node name="NorthCar03" type="StaticBody2D" parent="Props" unique_id=105007979]
+position = Vector2(1237.9147, 6)
+rotation = 3.1415927
+script = ExtResource("4_g3ifm")
+paint = Color(0.36, 0.38, 0.42, 1)
+
+[node name="NorthCar04" type="StaticBody2D" parent="Props" unique_id=76157407]
+position = Vector2(2124.0317, 6)
+rotation = 3.1415927
+script = ExtResource("4_g3ifm")
+paint = Color(0.22, 0.24, 0.27, 1)
+
+[node name="NorthCar05" type="StaticBody2D" parent="Props" unique_id=1575819407]
+position = Vector2(3045.9595, 6)
+rotation = 3.1415927
+script = ExtResource("4_g3ifm")
+paint = Color(0.26, 0.28, 0.32, 1)
+
+[node name="NorthCar06" type="StaticBody2D" parent="Props" unique_id=2138839215]
+position = Vector2(3966.2798, 6)
+rotation = 3.1415927
+script = ExtResource("4_g3ifm")
+paint = Color(0.26, 0.28, 0.32, 1)
+
+[node name="NorthCar07" type="StaticBody2D" parent="Props" unique_id=1718827881]
+position = Vector2(6551.2046, 6)
+rotation = 3.1415927
+script = ExtResource("4_g3ifm")
+paint = Color(0.22, 0.24, 0.27, 1)
+
+[node name="NorthCar08" type="StaticBody2D" parent="Props" unique_id=2090577970]
+position = Vector2(7527.274, 6)
+rotation = 3.1415927
+script = ExtResource("4_g3ifm")
+paint = Color(0.42, 0.43, 0.44, 1)
+
+[node name="SouthCar01" type="StaticBody2D" parent="Props" unique_id=2120290874]
+position = Vector2(-1548.1287, 234)
+script = ExtResource("4_g3ifm")
+paint = Color(0.42, 0.43, 0.44, 1)
+
+[node name="SouthCar02" type="StaticBody2D" parent="Props" unique_id=350146366]
+position = Vector2(344.83838, 234)
+script = ExtResource("4_g3ifm")
+paint = Color(0.26, 0.28, 0.32, 1)
+
+[node name="SouthCar03" type="StaticBody2D" parent="Props" unique_id=23887931]
+position = Vector2(3203.1484, 234)
+script = ExtResource("4_g3ifm")
+paint = Color(0.22, 0.24, 0.27, 1)
+
+[node name="SouthCar04" type="StaticBody2D" parent="Props" unique_id=2084051181]
+position = Vector2(4237.4478, 234)
+script = ExtResource("4_g3ifm")
+paint = Color(0.26, 0.28, 0.32, 1)
+
+[node name="SouthCar05" type="StaticBody2D" parent="Props" unique_id=1269927102]
+position = Vector2(5596.865, 234)
+script = ExtResource("4_g3ifm")
+paint = Color(0.22, 0.24, 0.27, 1)
+
+[node name="SouthCar06" type="StaticBody2D" parent="Props" unique_id=320358039]
+position = Vector2(7170.4854, 234)
+script = ExtResource("4_g3ifm")
+
+[node name="SouthCar07" type="StaticBody2D" parent="Props" unique_id=86807891]
+position = Vector2(8257.777, 234)
+script = ExtResource("4_g3ifm")
+paint = Color(0.26, 0.28, 0.32, 1)
+
+[node name="KioskNorth" type="StaticBody2D" parent="Props" unique_id=1042239642]
+position = Vector2(2904, -84)
+rotation = 3.1415927
+script = ExtResource("4_g3ifm")
+kind = 1
+
+[node name="KioskSouth" type="StaticBody2D" parent="Props" unique_id=1953301824]
+position = Vector2(4224, 324)
+script = ExtResource("4_g3ifm")
+kind = 1
+
+[node name="Crowd" type="Node2D" parent="." unique_id=1974181258 node_paths=PackedStringArray("spy", "subject")]
+script = ExtResource("5_gssxx")
+spy = NodePath("../Spy")
+subject = NodePath("../Subject")
+group_weights = PackedFloat32Array(0.3, 0.25, 0.25, 0.2)
+
+[node name="NorthSidewalk" type="Line2D" parent="Crowd" unique_id=475897243]
+points = PackedVector2Array(-1824, -144, 8784, -144)
+width = 153.6
+script = ExtResource("6_e26kv")
+
+[node name="SouthSidewalk" type="Line2D" parent="Crowd" unique_id=881038980]
+points = PackedVector2Array(-1824, 384, 8784, 384)
+width = 153.6
+script = ExtResource("6_e26kv")
+
+[node name="CrosswalkWest" type="Line2D" parent="Crowd" unique_id=1911130646]
+points = PackedVector2Array(1728, -144, 1728, 384)
+width = 144.0
+script = ExtResource("6_e26kv")
+
+[node name="CrosswalkEast" type="Line2D" parent="Crowd" unique_id=2133748345]
+points = PackedVector2Array(4992, -144, 4992, 384)
+width = 144.0
+script = ExtResource("6_e26kv")
+
+[node name="SideStreet" type="Line2D" parent="Crowd" unique_id=2139113928]
+points = PackedVector2Array(6048, -144, 6048, -2112)
+width = 288.0
+script = ExtResource("6_e26kv")
+
 [node name="Bounds" type="StaticBody2D" parent="." unique_id=200468946]
+collision_layer = 4
 
 [node name="WestEnd" type="CollisionShape2D" parent="Bounds" unique_id=858162899]
 position = Vector2(-960, 120)
@@ -765,19 +890,14 @@ building = NodePath("../../../../Buildings/North13")
 
 [node name="SightShade" type="CanvasGroup" parent="." unique_id=134684129 node_paths=PackedStringArray("eye")]
 script = ExtResource("7_wvkha")
-eye = NodePath("../Spy")
+eye = NodePath("../Spy/Eye")
 
-[node name="Subject" type="Node2D" parent="." unique_id=1555299953 node_paths=PackedStringArray("route") instance=ExtResource("8_rwp7t")]
-z_index = 8
+[node name="Subject" parent="." unique_id=1555299953 node_paths=PackedStringArray("route") instance=ExtResource("8_rwp7t")]
 position = Vector2(484, -225.6)
-script = ExtResource("9_2fbfx")
 route = NodePath("../Route")
 
-[node name="Spy" type="CharacterBody2D" parent="." unique_id=1612717943 instance=ExtResource("10_2wbg1")]
-z_index = 8
+[node name="Spy" parent="." unique_id=1612717943 instance=ExtResource("10_2wbg1")]
 position = Vector2(-672, 384)
-motion_mode = 1
-script = ExtResource("11_hgsas")
 
 [node name="LastSeen" type="Node2D" parent="." unique_id=1523952697]
 script = ExtResource("12_qn7up")
@@ -792,9 +912,7 @@ zoom = Vector2(0.9, 0.9)
 script = ExtResource("14_3gca0")
 director = NodePath("../Director")
 
-[node name="GrainOverlay" type="CanvasLayer" parent="." unique_id=1495337460 instance=ExtResource("15_12x4t")]
-layer = 10
-script = ExtResource("16_n4d3w")
+[node name="GrainOverlay" parent="." unique_id=1495337460 instance=ExtResource("15_12x4t")]
 
 [node name="Hud" type="CanvasLayer" parent="." unique_id=1908000471]
 layer = 11
@@ -826,7 +944,8 @@ theme_override_colors/font_color = Color(0.93, 0.95, 0.98, 1)
 theme_override_colors/font_outline_color = Color(0.02, 0.03, 0.05, 1)
 theme_override_constants/outline_size = 6
 
-[node name="HeatMeter" type="Control" parent="Hud" node_paths=PackedStringArray("director")]
+[node name="HeatMeter" type="Control" parent="Hud" unique_id=1991553328 node_paths=PackedStringArray("director")]
+layout_mode = 3
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
@@ -837,10 +956,12 @@ mouse_filter = 2
 script = ExtResource("18_heat")
 director = NodePath("../../Director")
 
-[node name="Director" type="Node" parent="." unique_id=128414739 node_paths=PackedStringArray("subject", "spy", "grain", "marker", "message")]
+[node name="Director" type="Node" parent="." unique_id=128414739 node_paths=PackedStringArray("subject", "spy", "crowd", "shade", "grain", "marker", "message")]
 script = ExtResource("17_qui2e")
 subject = NodePath("../Subject")
 spy = NodePath("../Spy")
+crowd = NodePath("../Crowd")
+shade = NodePath("../SightShade")
 grain = NodePath("../GrainOverlay")
 marker = NodePath("../LastSeen")
 message = NodePath("../Hud/Message")
