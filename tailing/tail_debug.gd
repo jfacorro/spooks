@@ -1,5 +1,5 @@
 extends Node2D
-## F2: the playtest overlay. Shows the numbers behind heat and contact, plus
+## F2: the playtest overlay. Shows the numbers behind sightings and contact, plus
 ## the subject's vision cones and the distance bands around them, even when
 ## the subject is out of sight.
 
@@ -32,8 +32,9 @@ func _process(_delta: float) -> void:
 	queue_redraw()
 	var d := director
 	var lines := PackedStringArray([
-		"heat %5.1f   %s   %+.1f/s  x%.2f" % [d.heat, d.alert_name(), d.heat_rate, d.modifier],
-		"distance %.1f m (%s)   seen %s   sightings %d" % [d.distance_m(), d.band_name(), "YES" if d.seen else "no", d.sightings],
+		"sightings %d/%d   %s   noticing %3.0f%%  %+.0f%%/s  x%.2f" % [
+			d.sightings, TailDirector.SIGHTINGS_TO_BURN, d.alert_name(), d.noticing * 100.0, d.notice_rate * 100.0, d.modifier],
+		"distance %.1f m (%s)   seen %s" % [d.distance_m(), d.band_name(), "YES" if d.seen else "no"],
 		"contact %s   lost timer %.1f s" % ["yes" if d.contact else "NO", d.lost_timer],
 		"spy gait %s   cover %s   walking with %d   pace limit %s" % [
 			TailSpy.Gait.keys()[d.spy.gait].to_lower(), d.cover if d.cover != &"" else "none", d.crowd_count,
