@@ -2,10 +2,10 @@ shader_type canvas_item;
 render_mode unshaded;
 
 // Printed-ink look for a 2D game, after Ape Out: a cool blue-gray grade, fine
-// film grain, blotchy ink density and slightly ragged shape edges. The grain
-// lives on the screen; the ink blotches and edge wobble are anchored to the
-// world (grain_overlay.gd feeds in the camera) so they don't swim when the
-// camera moves.
+// film grain and blotchy ink density. The grain lives on the screen; the ink
+// blotches are anchored to the world (grain_overlay.gd feeds in the camera) so
+// they don't swim when the camera moves. Ragged shape edges are there too but
+// off by default (edge_roughness 0): they bend straight lines into squiggles.
 
 uniform sampler2D screen_texture : hint_screen_texture, filter_linear;
 
@@ -26,8 +26,10 @@ group_uniforms ink;
 // Uneven ink density, like a screen print: strength and blotch size (world px).
 uniform float mottle_strength : hint_range(0.0, 0.5) = 0.05;
 uniform float mottle_scale : hint_range(8.0, 512.0) = 35.0;
-// How far shape edges wobble (world px) and how tight the wobble is.
-uniform float edge_roughness : hint_range(0.0, 8.0) = 2.0;
+// How far shape edges wobble (world px) and how tight the wobble is. Off by
+// default: any wobble turns straight lines (curbs, road markings, building
+// fronts) into squiggly ones.
+uniform float edge_roughness : hint_range(0.0, 8.0) = 0.0;
 uniform float edge_detail : hint_range(1.0, 32.0) = 5.0;
 
 group_uniforms grain;
@@ -79,12 +81,17 @@ void fragment() {
 	vec2 world = world_offset + SCREEN_UV * view_size * world_per_px;
 	vec2 world_to_uv = 1.0 / (view_size * world_per_px);
 
-	// Ragged edges: read the screen from a slightly wobbled, world-anchored spot.
-	vec2 e = world / edge_detail;
-	vec2 wobble = vec2(value_noise(e), value_noise(e + 41.3))
-		+ 0.5 * vec2(value_noise(e * 2.7 + 7.1), value_noise(e * 2.7 + 23.9));
-	wobble = wobble / 1.5 * 2.0 - 1.0;
-	vec3 src = texture(screen_texture, SCREEN_UV + wobble * edge_roughness * world_to_uv).rgb;
+	// Ragged edges, if on: read the screen from a slightly wobbled,
+	// world-anchored spot.
+	vec2 uv = SCREEN_UV;
+	if (edge_roughness > 0.0) {
+		vec2 e = world / edge_detail;
+		vec2 wobble = vec2(value_noise(e), value_noise(e + 41.3))
+			+ 0.5 * vec2(value_noise(e * 2.7 + 7.1), value_noise(e * 2.7 + 23.9));
+		wobble = wobble / 1.5 * 2.0 - 1.0;
+		uv += wobble * edge_roughness * world_to_uv;
+	}
+	vec3 src = texture(screen_texture, uv).rgb;
 
 	// Grade toward the palette, but let strongly saturated accents through.
 	vec3 tinted = texture(palette, vec2(clamp(luma(src), 0.0, 1.0), 0.5)).rgb;
