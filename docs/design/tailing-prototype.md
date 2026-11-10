@@ -26,7 +26,7 @@ Moment to moment, the player:
 3. Closes the gap when the target turns a corner, enters a crowd or takes stairs, because that is when sight breaks.
 4. Falls back on open stretches like the bridge, where seeing them is easy but hiding is not.
 
-The resulting rhythm is the classic tailing rule: close up before corners, hang back on straights. Two values on the target drive it: **heat**, how suspicious they are of you, and **contact**, whether you still know where they are.
+The resulting rhythm is the classic tailing rule: close up before corners, hang back on straights. Two things drive it: **sightings**, how many times the subject has noticed you (three and they've made you), and **contact**, whether you still know where they are.
 
 ## The target
 
@@ -51,32 +51,36 @@ A **glance** happens mid-stride: the subject keeps walking and turns their head 
 
 Random look-backs can be either kind; while the subject is calm, most of them are glances.
 
-**Suspicion changes behaviour.** Heat runs from 0 to 100 and sets one of four states. States never go back down: a wary subject stays wary.
+**Suspicion changes behaviour.** Each time the subject notices you is a sighting, and each sighting moves them up one of four states. Sightings never come back: a wary subject stays wary.
 
-| State | Heat | Behaviour |
+| State | Sightings | Behaviour |
 | --- | --- | --- |
-| Calm | 0 to 39 | Scripted look-backs plus a random one every 12 to 18 s. Stays on the train. |
-| Wary | 40 to 69 | Random look-backs every 6 to 10 s. Checks the reflection at every dark window. Changes pace. Steps off the train at the last moment. |
-| Suspicious | 70 to 99 | Also doubles back, stops dead, and crosses the street to see who crosses with them. |
-| Burned | 100 | They have made you, and the subject bolts. You get one chance to recover. |
+| Calm | 0 | Scripted look-backs plus a random one every 12 to 18 s. Stays on the train. |
+| Wary | 1 | Random look-backs every 6 to 10 s. Checks the reflection at every dark window. Changes pace. Steps off the train at the last moment. |
+| Suspicious | 2 | Also doubles back, stops dead, and crosses the street to see who crosses with them. |
+| Burned | 3 | They have made you, and the subject bolts. You get one chance to recover. |
 
-**Recovery.** When the subject bolts, they run for the nearest crowd or side street, glancing back often. Keep them in sight without being seen again for the recovery time, and they think they have shaken you: they slow down and rejoin the route at 70 heat, the only time heat drops a state. If they spot you again or you lose them first, the attempt fails, and you get one recovery per attempt.
+**Recovery.** When the subject bolts, they run for the nearest crowd or side street, glancing back often. Keep them in sight without being seen again for the recovery time, and they think they have shaken you: they slow down and rejoin the route suspicious, with one sighting left: the only time a sighting comes back. If they spot you again or you lose them first, the attempt fails, and you get one recovery per attempt.
 
 ## Detection rules
 
-Heat only rises while the subject can see you, and how fast depends on how far back you are. They can see you during a look-back, in a reflection, from the top of a staircase, or straight ahead after doubling back toward you.
+The subject can only notice you while they can see you: during a look-back, in a reflection, from the top of a staircase, or straight ahead after doubling back toward you. While they see you, a noticing bar fills, and when it's full that's a sighting. How long that takes depends on how far back you are. Get out of their sight before it fills and it drains away without counting.
 
-![Distance bands behind the subject: Lost over 35 m, Far 20 to 35 m with no heat, Tail zone 10 to 20 m at +8 heat/s, Close 4 to 10 m at +25 heat/s, Too close under 4 m at +40 at once then +60 heat/s](images/distance-bands.png)
+| Behind the subject | Band | Time to notice you, in the open |
+| --- | --- | --- |
+| Over 35 m | Lost | No contact: the lost timer runs |
+| 20 to 35 m | Far | They can't pick you out |
+| 10 to 20 m | Tail zone | 2.5 s: one look-back doesn't catch you unless you're running, but the subject walking back toward you does |
+| 4 to 10 m | Close | 1.2 s: a full look-back catches you |
+| Under 4 m | Too close | 0.5 s: almost any look |
 
-*Distance bands behind the subject, not to scale.*
+Past 20 m the subject can't pick you out, but crowds and corners break your sight. Inside 4 m, any look notices you almost at once.
 
-Past 20 m the subject can't pick you out, but crowds and corners break your sight. Inside 4 m, a single look adds 40 heat and turns a calm subject wary.
+**Glances.** A glance is a quick, deliberate check, so it notices twice as fast: one that catches you within 4 m is a sighting, and further back it fills part of the bar.
 
-**Glances.** A glance is too short for the per-second rate to add up to much, so being caught by one also adds heat at once: +8 in the tail zone and +15 when close. Inside 4 m the +40 applies instead. Modifiers and familiar face multiply it like the rate.
+**Modifiers** change how fast the subject notices you. Cover (peeking, a crowd, a doorway) takes the place of how fast you're moving; hurrying or running takes you out of a crowd or doorway. Walking in a crowd also keeps you to its pace.
 
-**Modifiers** multiply the rate for your distance band. Cover (peeking, a crowd, a doorway) takes the place of how fast you're moving; hurrying or running takes you out of a crowd or doorway. Walking in a crowd also keeps you to its pace.
-
-| What you are doing when seen | Heat rate |
+| What you are doing when seen | Noticing speed |
 | --- | --- |
 | Peeking around a corner | ×0.2 |
 | Moving with a crowd (3 or more pedestrians within 2 m) | ×0.3 |
@@ -87,9 +91,9 @@ Past 20 m the subject can't pick you out, but crowds and corners break your sigh
 | Hurrying | ×1.5 |
 | Running | ×3 |
 
-**Familiar face.** Every separate sighting raises later rates by ×0.25: the second sighting is ×1.25, the third ×1.5. A sighting counts as separate after 5 s unseen. A tail usually gives itself away by being the same stranger again and again, so dodging every look matters more than surviving one.
+**One look, one sighting.** Once a look has counted, it can't count again: you have to be out of their sight for 2 s before they can notice you afresh. A tail usually gives itself away by being the same stranger again and again, so dodging every look matters more than surviving one.
 
-**Cooling off.** Heat drops 2 per second while you are unseen, but never below the floor of the state it has reached.
+**Getting away with it.** Out of their sight, the noticing drains from full to empty in under a second. Sightings never drain.
 
 **Line of sight.** Walls, parked cars, buses and kiosks block sight in both directions. Each pedestrian blocks a disc about as wide as their shoulders, so a thick crowd hides you and also hides the subject. Someone standing right on either end of the line doesn't count.
 
@@ -114,7 +118,7 @@ Cover either breaks the subject's line of sight or makes you look like part of t
 | --- | --- | --- |
 | Corner | Hug the wall and peek: you see around it and show only a sliver | You are standing still while the subject keeps walking |
 | Doorway | Step into a shop entrance, out of sight from the same sidewalk | Useless once the subject crosses to the other side |
-| Crowd | Pedestrians block sight, and moving with them cuts heat | The crowd hides the subject too, and sets your pace |
+| Crowd | Pedestrians block sight, and moving with them slows the noticing | The crowd hides the subject too, and sets your pace |
 | Shop window | Stop and browse, like any shopper | A dark window can also show you to the subject |
 | Parked car, kiosk, bus shelter | Solid blockers along the curb | Few of them, and none on the bridge |
 | Opposite sidewalk | Tail in parallel from across the road | Traffic blocks your view, and crossing back is risky |
@@ -179,11 +183,11 @@ The spy moves the same way as in the demo: 8-way movement, with the body turning
 - Areas outside the spy's sight are darker and grainier, which the existing post-process can do with a sight mask.
 - The subject's red briefcase passes through the colour grade untouched.
 - Look-back cones and reflection wedges are pale and translucent, like the flashlight in the demo.
-- Heat shows on a slim meter at the top of the screen, with ticks where the subject turns wary and suspicious. While the subject is looking right at the spy, the meter says SEEN, the cone that caught them brightens, and a ring pulses around the spy. Grain and vignette also tighten as heat rises, and the subject's posture changes with each state.
+- Three marks at the top of the screen are the sightings the subject can make; one fills with each sighting. Under them, a bar fills while the subject is noticing you and drains when you get out of sight. While the subject is looking right at the spy, the bar pulses and says SEEN, the cone that caught them brightens, and a ring pulses around the spy. Grain and vignette tighten with each sighting, and the subject's posture changes with each state.
 - The cover you're in shows under the middle of the meter: "in a crowd", "in a doorway" or "peeking". People, parked cars and kiosks cut shadows out of the subject's cone, so you can see who's hiding you.
 - Parked cars and kiosks shade the street behind them like walls do. People don't, or a crowd would cover the street in flickering shadows; only the people hiding the subject from you throw a soft streak of shadow toward where the subject is.
 - While you hug a wall, a pale line runs along it at your back.
-- The heat meter, the last-seen marker and its lost-timer ring are the only HUD. A debug overlay on F2 shows exact heat and bands for playtesting.
+- The sighting marks and noticing bar, the last-seen marker and its lost-timer ring are the only HUD. A debug overlay on F2 shows the exact noticing and bands for playtesting.
 
 ## Prototype scope
 
@@ -191,7 +195,7 @@ Build it in five steps. Each one is playable and answers one question before the
 
 | Step | Adds | Playtest question |
 | --- | --- | --- |
-| 1. One street | Grey-box street with one corner, the subject's route with look-backs and tells, heat, contact, the lost timer, spy movement, restart | Is keeping the distance fun with nothing else in the way? |
+| 1. One street | Grey-box street with one corner, the subject's route with look-backs and tells, sightings, contact, the lost timer, spy movement, restart | Is keeping the distance fun with nothing else in the way? |
 | 2. Crowd and cover | Pedestrians, crowd blending, doorways, corner peeks, parked cars and kiosks | Does the crowd make the tail easier and harder at the same time? |
 | 3. Reflections | Dark and lit windows, the subject's reflection checks, browsing a window, the spy's reflection view | Can players read the wedge from above without being told? |
 | 4. Traffic | Road lanes, cars and a bus as moving blockers, lights, horns, the subject's dash | Is running through traffic a real choice rather than the only one? |
@@ -214,7 +218,7 @@ These are starting points for the first playtest, not final numbers. The prototy
 | Subject dash | 4 m/s | The crossing only |
 | Pedestrians | 1.2 to 1.6 m/s | |
 | Cars | 10 m/s (36 km/h) | Buses 7 m/s |
-| Look-back cone | 120°, 20 m; a glance 60° | Matches the edge of the heat bands |
+| Look-back cone | 120°, 20 m; a glance 60° | Matches the edge of the distance bands |
 | Forward vision | 110°, 20 m | |
 | Looking down from the top of stairs | 30 m, all around | Sees over crowds |
 | Camera zoom | 0.9, about 30 × 17 m on screen | 0.75 on the bridge, 1.1 underground. At 0.6 the mocks showed people too small to read |
@@ -229,6 +233,9 @@ These are starting points for the first playtest, not final numbers. The prototy
 | Parked cars | About one every 30 m on each curb | None at the crosswalks or across from the side street |
 | Hugging a wall | 1 m/s sidestep; the head leans 0.35 m past a corner | |
 | Last-seen marker delay | 0.5 s | |
+| Noticing drain | Full to empty in about 0.7 s | |
+| Glances | Notice twice as fast | |
+| A new sighting | After 2 s out of the subject's sight | |
 
 ## Open questions
 
@@ -251,6 +258,8 @@ Each of these needs your call before implementation starts. Where the doc alread
   **Decided:** heat starts invisible, shown only through grain, vignette and posture, and gets revisited after the first playtest.
 
   **Revised after the first playtest:** being inside a look-back cone often changed nothing you could see, so it was hard to tell when a look counted. Heat now has a small meter, and being seen has its own cue (see Reading the street).
+
+  **Revised after step 2:** heat is gone. The subject can notice you three times, one sighting per alert level, and a bar shows them noticing you before it counts. After playing it, the times to notice were doubled: at first a single look-back from the tail zone used up a third of the budget.
 - [x] Is the train the end of this mission, or does it lead into another physical task, such as photographing a handoff?
 
   **Decided:** the train is not the end. Each mission closes with an objective; see Endings under The street route.

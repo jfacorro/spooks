@@ -4,7 +4,7 @@ extends Polygon2D
 ## A patch of ground: sidewalk, road, side street or crosswalk. The kind sets
 ## its colour and markings (and, from step 2 on, who uses it: pedestrians keep
 ## to sidewalks, cars to roads). Sidewalks name their side of the road so the
-## heat rules can tell when the spy is tailing from across the street.
+## detection rules can tell when the spy is tailing from across the street.
 
 enum Kind { SIDEWALK, ROAD, ALLEY, CROSSWALK }
 

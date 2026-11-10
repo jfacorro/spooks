@@ -143,7 +143,7 @@ func _build_network() -> void:
 				var glass: PackedVector2Array = child.segment()
 				var middle := (glass[0] + glass[1]) / 2.0
 				var street_side: Vector2 = child.global_transform.y.normalized()
-				_windows.append({"spot": middle + street_side * 0.7 * M, "glass": middle})
+				_windows.append({"spot": middle + street_side * 0.7 * M, "glass": middle, "from": glass[0], "to": glass[1], "out": street_side})
 	# Free ends are where the street carries on off the map.
 	for id in walkway_ends:
 		if _graph.get_point_connections(id).size() == 1:
@@ -342,7 +342,10 @@ func _with_window_stops(path: PackedVector2Array, spread: PackedFloat32Array) ->
 				if t > 0.05 and t < 0.95:
 					if not picks.has(i):
 						picks[i] = []
-					picks[i].append([t, window.spot, window.glass])
+					# Somewhere along the glass, so people stopping at the
+					# same window don't all stand on one spot.
+					var glass: Vector2 = window.from.lerp(window.to, _rng.randf_range(0.15, 0.85))
+					picks[i].append([t, glass + window.out * _rng.randf_range(0.6, 0.9) * M, glass])
 				break
 	var new_path := PackedVector2Array()
 	var new_spread := PackedFloat32Array()

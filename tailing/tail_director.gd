@@ -1,20 +1,22 @@
 class_name TailDirector
 extends Node
-## Runs one tail: heat (how suspicious the subject is of the spy), contact
-## (whether the spy can still see the subject), cover, and how the attempt
-## ends. Heat shows on the heat meter, and through grain, vignette and the
-## subject's posture; the cover the spy is in shows under the meter. F2 shows
-## the exact numbers for playtesting; R restarts any time.
+## Runs one tail: sightings (how many times the subject has noticed the spy;
+## three and they've made them), noticing (how close the subject is to
+## noticing the spy right now), contact (whether the spy can still see the
+## subject), cover, and how the attempt ends. Sightings and noticing show on
+## the meter at the top, and through grain, vignette and the subject's
+## posture; the cover the spy is in shows under the meter. F2 shows the exact
+## numbers for playtesting; R restarts any time.
 
 enum Outcome { NONE, LOST, MADE, DONE }
 
 const M := 48.0
-## Heat per second while seen, by distance band: [up to metres, rate].
-const BANDS := [[4.0, 60.0], [10.0, 25.0], [20.0, 8.0], [35.0, 0.0]]
+## Distance bands behind the subject, up to these many metres.
+const BAND_LIMITS := [4.0, 10.0, 20.0, 35.0]
 const BAND_NAMES := ["too close", "close", "tail zone", "far", "lost"]
-## Heat never cools below the floor of the alert level it has reached.
-const FLOORS := [0.0, 40.0, 70.0, 100.0]
 const ALERT_NAMES := ["calm", "wary", "suspicious", "burned"]
+## Each sighting raises the subject's alert level; the third burns the spy.
+const SIGHTINGS_TO_BURN := 3
 const INTRO := "Tail the subject in the grey coat to wherever they're going.\nDon't let them see you, and don't lose them.\n\nWASD / arrows walk   Shift hurry   Space run   E hug a wall, push on to peek   R restart   F2 debug"
 const COVER_NAMES := {&"peeking": "peeking", &"doorway": "in a doorway", &"crowd": "in a crowd"}
 
@@ -33,26 +35,31 @@ const COVER_NAMES := {&"peeking": "peeking", &"doorway": "in a doorway", &"crowd
 @export var lost_time := 8.0
 ## Seconds a bolting subject must be kept in sight, unseen, for them to calm down.
 @export var recovery_time := 10.0
-## Extra heat, once per look, for being seen inside the closest band.
-@export var too_close_jolt := 40.0
-## Extra heat, once per glance, for being caught by one in the tail zone (10 to
-## 20 m) and when close (4 to 10 m). A glance is too short for the per-second
-## rate alone to matter. Inside 4 m the too-close jolt applies instead.
-@export var glance_jolt_tail := 8.0
-@export var glance_jolt_close := 15.0
-## Heat lost per second while unseen.
-@export var cool_off := 2.0
-## Each separate sighting makes the next ones count this much more.
-@export var familiar_step := 0.25
-## Seconds unseen before the next sighting counts as a separate one.
-@export var separate_sighting_after := 5.0
 ## Seconds out of contact before the last-seen marker shows, so someone
 ## walking between the spy and the subject doesn't flash it up.
 @export var marker_delay := 0.5
 
+@export_group("Being noticed")
+## Seconds the subject has to see the spy, out in the open and walking, before
+## it counts as a sighting: inside 4 m, 4 to 10 m, and 10 to 20 m. Beyond
+## 20 m they can't pick the spy out at all.
+@export var notice_too_close := 0.5
+@export var notice_close := 1.2
+@export var notice_tail := 2.5
+## A glance is a deliberate check over the shoulder: it notices this many
+## times as fast.
+@export var glance_speedup := 2.0
+## How much of the noticing drains away per second once the spy is out of
+## their sight. Breaking sight before it fills means it doesn't count.
+@export var notice_drain := 1.5
+## Seconds unseen before the subject can notice the spy again after a
+## sighting, so one long look only ever counts once.
+@export var separate_sighting_after := 2.0
+
 @export_group("Cover")
-## Heat rates while seen in each kind of cover. Cover takes the place of how
-## fast the spy is moving; hurrying or running leaves the crowd and doorways.
+## How fast the subject notices the spy in each kind of cover, as a share of
+## the speed out in the open. Cover takes the place of how fast the spy is
+## moving; hurrying or running leaves the crowd and doorways.
 @export var peek_rate := 0.2
 @export var crowd_rate := 0.3
 @export var doorway_rate := 0.5
@@ -60,11 +67,13 @@ const COVER_NAMES := {&"peeking": "peeking", &"doorway": "in a doorway", &"crowd
 @export var crowd_size := 3
 @export var crowd_radius := 2.0 * M
 
-var heat := 0.0
+## How many times the subject has noticed the spy.
+var sightings := 0
+## How close the subject is to noticing the spy, 0 to 1. At 1 it's a sighting.
+var noticing := 0.0
 var alert := Subject.Alert.CALM
 var contact := true
 var seen := false
-var sightings := 0
 var lost_timer := 0.0
 var known_position := Vector2.ZERO
 var known_heading := 0.0
@@ -72,8 +81,9 @@ var outcome := Outcome.NONE
 var recovering := false
 var recovered := false
 var recovery_progress := 0.0
-## For the debug overlay: the last heat rate and the modifier behind it.
-var heat_rate := 0.0
+## For the debug overlay: how fast the noticing is filling, and the modifier
+## behind it.
+var notice_rate := 0.0
 var modifier := 1.0
 ## The cover the spy is in: &"peeking", &"doorway", &"crowd" or &"" for none.
 var cover := &""
@@ -81,12 +91,10 @@ var cover := &""
 var crowd_count := 0
 
 var _unseen_for := INF
+var _counted := false # this look has already counted as a sighting
 var _out_of_contact := 0.0
-var _jolted := false
-var _glance_hit := -1
-var _unseen_since_bolt := false
 var _saw_entering := false
-var _shown_heat := 0.0
+var _shown_tension := 0.0
 var _clock := 0.0
 var _message_until := 0.0
 
@@ -106,7 +114,7 @@ func _physics_process(delta: float) -> void:
 	_update_contact(delta)
 	if outcome != Outcome.NONE:
 		return
-	_update_heat(delta)
+	_update_noticing(delta)
 	_update_recovery(delta)
 	if outcome == Outcome.NONE:
 		subject.alert = alert
@@ -118,12 +126,13 @@ func _process(delta: float) -> void:
 	# The subject fades rather than blinks when someone steps in the way.
 	if outcome == Outcome.NONE:
 		subject.shown = move_toward(subject.shown, 1.0 if contact else 0.0, 6.0 * delta)
-	# Heat shows as a coarser, tighter picture.
-	_shown_heat = lerpf(_shown_heat, heat / 100.0, 1.0 - exp(-2.0 * delta))
+	# Each sighting, and being noticed, shows as a coarser, tighter picture.
+	var tension := (sightings + noticing) / float(SIGHTINGS_TO_BURN)
+	_shown_tension = lerpf(_shown_tension, clampf(tension, 0.0, 1.0), 1.0 - exp(-2.0 * delta))
 	var material: ShaderMaterial = grain.get_node("Screen").material
-	material.set_shader_parameter("grain_amount", lerpf(0.06, 0.14, _shown_heat))
-	material.set_shader_parameter("vignette_strength", lerpf(0.25, 0.6, _shown_heat))
-	material.set_shader_parameter("vignette_radius", lerpf(1.3, 1.05, _shown_heat))
+	material.set_shader_parameter("grain_amount", lerpf(0.06, 0.14, _shown_tension))
+	material.set_shader_parameter("vignette_strength", lerpf(0.25, 0.6, _shown_tension))
+	material.set_shader_parameter("vignette_radius", lerpf(1.3, 1.05, _shown_tension))
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -137,10 +146,10 @@ func distance_m() -> float:
 
 func band_name() -> String:
 	var d := distance_m()
-	for i in BANDS.size():
-		if d < BANDS[i][0]:
+	for i in BAND_LIMITS.size():
+		if d < BAND_LIMITS[i]:
 			return BAND_NAMES[i]
-	return BAND_NAMES[BANDS.size()]
+	return BAND_NAMES[BAND_LIMITS.size()]
 
 
 func alert_name() -> String:
@@ -150,11 +159,6 @@ func alert_name() -> String:
 ## The cover the spy is in, in words, or "" for none.
 func cover_name() -> String:
 	return COVER_NAMES.get(cover, "")
-
-
-## Heat never cools below this at the current alert level.
-func heat_floor() -> float:
-	return FLOORS[alert]
 
 
 # Contact: a clear line from the spy's eyes to the subject, within range, past
@@ -188,55 +192,55 @@ func _update_contact(delta: float) -> void:
 	marker.place(known_position, known_heading, lost_timer / lost_time)
 
 
-func _update_heat(delta: float) -> void:
+# While the subject can see the spy, the noticing fills: faster the closer the
+# spy is, slower in cover. When it's full that's a sighting. Out of their sight
+# it drains away, and after a sighting the spy has to get out of sight for a
+# moment before the next one can start.
+func _update_noticing(delta: float) -> void:
 	_update_cover()
 	# While peeking only the head shows round the corner.
 	seen = subject.can_see(spy.eye_position())
 	spy.spotted = seen
-	heat_rate = 0.0
-	if seen:
-		if _unseen_for >= separate_sighting_after:
-			sightings += 1
-		_unseen_for = 0.0
-		var distance := distance_m()
-		if distance < BANDS[0][0] and not _jolted:
-			heat += too_close_jolt
-			_jolted = true
-		modifier = _modifier()
-		var familiar := 1.0 + familiar_step * (sightings - 1)
-		if subject.caught_by("glance") and subject.glance_count != _glance_hit:
-			_glance_hit = subject.glance_count
-			heat += _glance_jolt(distance) * modifier * familiar
-		heat_rate = _band_rate(distance) * modifier * familiar
-		heat += heat_rate * delta
-	else:
+	notice_rate = 0.0
+	if not seen:
 		_unseen_for += delta
-		_jolted = false
-		if not recovering:
-			heat = maxf(heat - cool_off * delta, FLOORS[alert])
-	heat = clampf(heat, 0.0, 100.0)
-	# Alert only ever goes up (recovery is the one exception).
-	while alert < Subject.Alert.BURNED and heat >= FLOORS[alert + 1]:
-		alert = (alert + 1) as Subject.Alert
-	if alert == Subject.Alert.BURNED and not recovering:
+		noticing = maxf(noticing - notice_drain * delta, 0.0)
+		if _unseen_for >= separate_sighting_after:
+			_counted = false
+		return
+	_unseen_for = 0.0
+	if _counted:
+		return
+	modifier = _modifier()
+	notice_rate = modifier / _notice_time(distance_m())
+	if subject.caught_by("glance"):
+		notice_rate *= glance_speedup
+	noticing += notice_rate * delta
+	if noticing >= 1.0:
+		_count_sighting()
+
+
+func _notice_time(distance: float) -> float:
+	if distance < BAND_LIMITS[0]:
+		return notice_too_close
+	if distance < BAND_LIMITS[1]:
+		return notice_close
+	if distance < BAND_LIMITS[2]:
+		return notice_tail
+	return INF
+
+
+func _count_sighting() -> void:
+	noticing = 0.0
+	_counted = true
+	if recovering:
+		# Seen again while they're running from the spy: that's it.
+		_finish(Outcome.MADE)
+		return
+	sightings = mini(sightings + 1, SIGHTINGS_TO_BURN)
+	alert = sightings as Subject.Alert
+	if alert == Subject.Alert.BURNED:
 		_burned()
-
-
-func _glance_jolt(distance: float) -> float:
-	if distance < BANDS[0][0]:
-		return 0.0
-	if distance < BANDS[1][0]:
-		return glance_jolt_close
-	if distance < BANDS[2][0]:
-		return glance_jolt_tail
-	return 0.0
-
-
-func _band_rate(distance: float) -> float:
-	for band in BANDS:
-		if distance < band[0]:
-			return band[1]
-	return 0.0
 
 
 # Peeking beats a doorway, which beats a crowd. Walking in a crowd also keeps
@@ -270,8 +274,8 @@ func _in_doorway(point: Vector2) -> bool:
 	return false
 
 
-# What the spy is doing when seen multiplies the rate for their band: the cover
-# they're in, or else how fast they're moving.
+# What the spy is doing when seen speeds up or slows down the noticing: the
+# cover they're in, or else how fast they're moving.
 func _modifier() -> float:
 	var m := 1.0
 	match cover:
@@ -312,7 +316,6 @@ func _burned() -> void:
 		return
 	recovering = true
 	recovery_progress = 0.0
-	_unseen_since_bolt = false
 	subject.bolt()
 	_flash("They've made you, and they're running.\nKeep them in sight without being seen.", 5.0)
 
@@ -320,17 +323,13 @@ func _burned() -> void:
 func _update_recovery(delta: float) -> void:
 	if not recovering or outcome != Outcome.NONE:
 		return
-	if not seen:
-		_unseen_since_bolt = true
-	elif _unseen_since_bolt:
-		_finish(Outcome.MADE)
-		return
 	if contact and not seen:
 		recovery_progress += delta
 	if recovery_progress >= recovery_time:
 		recovering = false
 		recovered = true
-		heat = FLOORS[Subject.Alert.SUSPICIOUS]
+		# Back to suspicious: one sighting left.
+		sightings = SIGHTINGS_TO_BURN - 1
 		alert = Subject.Alert.SUSPICIOUS
 		subject.calm_down()
 		_flash("They think they've shaken you.", 3.0)
@@ -348,6 +347,7 @@ func _finish(result: Outcome, block: StreetBlock = null) -> void:
 	spy.frozen = true
 	spy.spotted = false
 	cover = &""
+	noticing = 0.0
 	if shade != null:
 		shade.people_in_way.clear()
 	marker.visible = false

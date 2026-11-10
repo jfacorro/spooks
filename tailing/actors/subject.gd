@@ -2,7 +2,7 @@ class_name Subject
 extends Node2D
 ## The person being tailed. Walks a SubjectRoute and checks behind them now
 ## and then, always with a tell first: the hat starts to turn before a glance,
-## and they slow down before a full look-back. The tail director owns heat and
+## and they slow down before a full look-back. The tail director owns sightings and
 ## sets `alert`; this script only acts on it.
 
 signal entered_building(block: StreetBlock)
