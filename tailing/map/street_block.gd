@@ -58,6 +58,7 @@ func _ready() -> void:
 	add_child(_collision, false, INTERNAL_MODE_FRONT)
 	_rebuild()
 	if not Engine.is_editor_hint():
+		add_to_group(&"street_blocks")
 		Occlusion.register(self, global_transform * outline())
 
 
@@ -91,6 +92,27 @@ func outline() -> PackedVector2Array:
 ## The middle of the doorway's floor, in global coordinates.
 func door_point() -> Vector2:
 	return to_global(door_point_local())
+
+
+## Whether `global_point` is inside the doorway, behind the building front.
+func doorway_contains(global_point: Vector2) -> bool:
+	if door_side == Side.NONE:
+		return false
+	var p := to_local(global_point)
+	var o := door_offset
+	var e := door_offset + door_width
+	var d := door_depth
+	var recess: Rect2
+	match door_side:
+		Side.NORTH:
+			recess = Rect2(o, 0, door_width, d)
+		Side.EAST:
+			recess = Rect2(size.x - d, o, d, door_width)
+		Side.SOUTH:
+			recess = Rect2(o, size.y - d, door_width, d)
+		_:
+			recess = Rect2(0, o, d, e - o)
+	return recess.has_point(p)
 
 
 ## The middle of the doorway's floor, relative to the block.

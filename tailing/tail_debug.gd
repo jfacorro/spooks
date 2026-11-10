@@ -35,7 +35,12 @@ func _process(_delta: float) -> void:
 		"heat %5.1f   %s   %+.1f/s  x%.2f" % [d.heat, d.alert_name(), d.heat_rate, d.modifier],
 		"distance %.1f m (%s)   seen %s   sightings %d" % [d.distance_m(), d.band_name(), "YES" if d.seen else "no", d.sightings],
 		"contact %s   lost timer %.1f s" % ["yes" if d.contact else "NO", d.lost_timer],
-		"spy gait %s" % TailSpy.Gait.keys()[d.spy.gait].to_lower(),
+		"spy gait %s   cover %s   walking with %d   pace limit %s" % [
+			TailSpy.Gait.keys()[d.spy.gait].to_lower(), d.cover if d.cover != &"" else "none", d.crowd_count,
+			"%.1f m/s" % (d.spy.pace_limit / M) if d.spy.pace_limit < INF else "none"],
+		"hugging %s   peeking %s   people %d" % [
+			"yes" if d.spy.is_hugging() else "no", "yes" if d.spy.is_peeking() else "no",
+			d.crowd.people_count() if d.crowd != null else 0],
 		"route: %s" % ", ".join(d.subject.picked_options),
 	])
 	if d.recovering:
