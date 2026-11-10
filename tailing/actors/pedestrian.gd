@@ -3,7 +3,8 @@ extends CharacterBody2D
 ## Someone else on the street. Walks from one door or street end to another,
 ## keeping to the right, alone or with a small group whose leader picks the
 ## way; stops at a shop window now and then, and stops to stare at anyone who
-## runs past. They're only drawn where the spy can see them, but they block
+## runs past. They're only drawn where the spy can see them (in front of the
+## spy, past walls, or in the dark window they're looking at), but they block
 ## sight either way. The Crowd spawns them, plans their walk and keeps them
 ## apart.
 
@@ -199,7 +200,8 @@ func _update_shown(delta: float) -> void:
 	_sight_check -= delta
 	if _sight_check <= 0.0:
 		_sight_check = 0.1
-		_in_sight = Occlusion.clear_line(crowd.spy.eye_position(), global_position, false)
+		var spy := crowd.spy
+		_in_sight = (spy.sees(global_position) and Occlusion.clear_line(spy.eye_position(), global_position, false)) 			or spy.sees_in_mirror(global_position)
 	_shown = move_toward(_shown, 1.0 if _in_sight else 0.0, 6.0 * delta)
 	modulate.a = _shown * clampf(presence, 0.0, 1.0)
 	visible = modulate.a > 0.01

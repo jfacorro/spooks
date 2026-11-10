@@ -56,7 +56,7 @@ Random look-backs can be either kind; while the subject is calm, most of them ar
 | State | Sightings | Behaviour |
 | --- | --- | --- |
 | Calm | 0 | Scripted look-backs plus a random one every 12 to 18 s. Stays on the train. |
-| Wary | 1 | Random look-backs every 6 to 10 s. Checks the reflection at every dark window. Changes pace. Steps off the train at the last moment. |
+| Wary | 1 | Random look-backs every 6 to 10 s. Checks the reflection at 1 in 4 of the dark windows they pass. Changes pace. Steps off the train at the last moment. |
 | Suspicious | 2 | Also doubles back, stops dead, and crosses the street to see who crosses with them. |
 | Burned | 3 | They have made you, and the subject bolts. You get one chance to recover. |
 
@@ -100,7 +100,7 @@ Past 20 m the subject can't pick you out, but crowds and corners break your sigh
 
 ## Keeping track
 
-You have contact while the spy has a clear line of sight to the subject within 35 m, directly or through a reflection. The street is always drawn, but people and cars only appear inside the spy's sight, so you know where the subject is only while you can actually see them.
+You have contact while the subject is in front of the spy, inside their view, with a clear line of sight within 35 m, or while they show in the dark window the spy is looking at. The street is always drawn, but people and cars only appear inside the spy's sight, so you know where the subject is only while you can actually see them.
 
 When contact breaks:
 
@@ -118,7 +118,7 @@ Cover either breaks the subject's line of sight or makes you look like part of t
 | Cover | How it works | The catch |
 | --- | --- | --- |
 | Corner | Hug the wall and peek: you see around it and show only a sliver | You are standing still while the subject keeps walking |
-| Doorway | Step into a shop entrance, out of sight from the same sidewalk | Useless once the subject crosses to the other side |
+| Doorway | Step into a shop entrance, out of sight from the same sidewalk; stopping in it turns you to face the street | Useless once the subject crosses to the other side |
 | Crowd | Pedestrians block sight, and moving with them slows the noticing | The crowd hides the subject too, and sets your pace |
 | Shop window | Stop and browse, like any shopper | A dark window can also show you to the subject |
 | Parked car, kiosk, bus shelter | Solid blockers along the curb | Few of them, and none on the bridge |
@@ -144,7 +144,7 @@ Shop windows are mirrors that work for both sides. The subject uses them to chec
 
 **The subject's reflection check.** At a few set points on the route, and now and then once they're wary, the subject stops and watches a dark window for 2 s. Once wary there's a 1 in 4 chance at each dark window they pass, 1 in 2 once suspicious, and never two checks within 10 s. The tell is that they slow down and turn to the glass for half a second first. Anything inside their wedge is seen, and the noticing goes by the distance along the path through the glass.
 
-**The spy's reflection view.** The spy uses one dark window at a time: the one they're facing, within 45° of the way they face and up to 8 m away. It shows you what's in its glass, with nothing to press: if the subject shows in it, you have contact. The closer you are, the more it shows: right at the glass you see 18 m of street in it, at 8 m only 4 m, and the further back you stand the narrower the slice of street the glass covers. Facing means the way the spy last walked or turned, so turn toward a window to use it; the street doesn't fill up with patches from every window you pass. The spy already sees all round, so a reflection only helps where something is in the way. The corner buildings at the side street also have dark windows on their side walls, which the subject can stop and check as they walk up it.
+**The spy's reflection view.** The spy uses one dark window at a time: the one they're facing, within 45° of the way they face and up to 8 m away. It shows you what's in its glass, with nothing to press: if the subject shows in it, you have contact. The closer you are, the more it shows: right at the glass you see 18 m of street in it, at 8 m only 4 m, and the further back you stand the narrower the slice of street the glass covers. Facing means the way the spy last walked or turned, so turn toward a window to use it; the street doesn't fill up with patches from every window you pass. With the spy seeing only what's in front of them, the glass is how you watch the street behind you: browse a dark window with your back to the street and the subject shows in it. The corner buildings at the side street also have dark windows on their side walls, which the subject can stop and check as they walk up it.
 
 **Browsing.** Press E in front of a shop window to stop and browse it, facing the glass. It counts as cover, like a doorway. Walking off ends it. Anywhere else along a wall, E hugs the wall as before.
 
@@ -175,7 +175,7 @@ The spy moves the same way as in the demo: 8-way movement, with the body turning
 
 | Keyboard / gamepad | Action |
 | --- | --- |
-| WASD / left stick | Walk at crowd pace |
+| WASD / left stick | Walk at crowd pace; a quick tap turns on the spot |
 | Shift / left trigger, hold | Hurry |
 | Space / A, hold | Run |
 | E / X next to a wall | Hug the wall; push toward the corner to peek |
@@ -186,6 +186,7 @@ The spy moves the same way as in the demo: 8-way movement, with the body turning
 **Reading the street in the grain look:**
 
 - Areas outside the spy's sight are darker and grainier, which the existing post-process can do with a sight mask.
+- The spy sees what's in front of them: a 180° view around the way they face, fading out over its last 15° at each side. Behind them the street is shaded like behind a wall, and people there aren't shown. The subject behind you is out of sight, and the lost timer runs.
 - The subject's red briefcase passes through the colour grade untouched.
 - Look-back cones and reflection wedges are pale and translucent, like the flashlight in the demo.
 - Three marks at the top of the screen are the sightings the subject can make; one fills with each sighting. Under them, a bar fills while the subject is noticing you and drains when you get out of sight. While the subject is looking right at the spy, the bar pulses and says SEEN, the cone that caught them brightens, and a ring pulses around the spy. Grain and vignette tighten with each sighting, and the subject's posture changes with each state.
@@ -243,6 +244,8 @@ These are starting points for the first playtest, not final numbers. The prototy
 | A new sighting | After 2 s out of the subject's sight | |
 | Mirror view | The dark window the spy faces, within 45° and 8 m | Shows 18 m into the reflection at the glass, falling to 4 m at 8 m away |
 | Glass checks | 0.5 s tell, 2 s watching; 1 in 4 dark windows once wary, 1 in 2 once suspicious; 10 s apart | |
+| Spy's view | 180°, the last 15° each side fading out | Seen up to the middle of the fade |
+| Tap to turn | A press under 0.15 s from standing turns on the spot | Holding walks |
 | Window light | ×1.3 noticing in the pool | |
 
 ## Open questions

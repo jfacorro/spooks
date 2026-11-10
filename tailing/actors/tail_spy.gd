@@ -6,6 +6,12 @@ extends CharacterBody2D
 ## way on the world. A pale ring pulses around the spy while the subject sees
 ## them.
 ##
+## The spy sees what's in front of them: a cone `view_degrees` wide around the
+## way they face, soft at the edges. A quick tap of a direction turns them on
+## the spot; holding it walks. Stopping in a doorway turns them to face the
+## street. Behind them, only the dark window they're looking at shows them
+## anything (the tail director picks it and sets `mirror`).
+##
 ## In front of a shop window, Interact has the spy stop and browse it, facing
 ## the glass, until they walk off. Next to any other wall, Interact puts the
 ## spy's back to it: they sidestep along it, and at an outside corner, pushing
@@ -34,6 +40,14 @@ const RADIUS := 16.0
 @export var hug_speed := 1.0 * M
 ## How far past the corner the head goes when peeking.
 @export var peek_reach := 0.35 * M
+@export_group("Looking")
+## How wide the spy's view is, around the way they face, and how much of it
+## at each edge fades out. They count as seeing up to the middle of the fade.
+@export_range(0, 360) var view_degrees := 180.0
+@export_range(0, 45) var view_soft_degrees := 15.0
+## A press of a direction shorter than this, from standing, turns the spy on
+## the spot instead of stepping.
+@export var tap_time := 0.15
 
 var gait := Gait.STILL
 ## The way the spy is facing, in radians.
@@ -45,6 +59,10 @@ var spotted := false
 ## The most the spy walks at, set by the tail director to keep them in step
 ## with the crowd they're walking in.
 var pace_limit := INF
+## Set by the tail director every frame: the dark window the spy is looking
+## at (or null), and how far past its glass they can see in it.
+var mirror: ShopWindow
+var mirror_reach := 0.0
 
 var _ring := 0.0
 var _time := 0.0
@@ -56,6 +74,10 @@ var _peek := 0.0
 var _peek_way := 0.0 # -1 toward the edge's first corner, +1 toward its second
 var _lean := Vector2.ZERO
 var _browsing: ShopWindow
+var _hold := 0.0 # how long the current direction has been held
+var _turning_on_spot := false
+var _look_to := INF # the way the spy is turning to face, or INF to stay put
+var _settling := false # just let go of the controls after walking
 
 @onready var _body: Node2D = $Body
 @onready var _shadow: Node2D = $Shadow
@@ -119,8 +141,45 @@ func is_browsing() -> bool:
 	return _browsing != null
 
 
+## Turn the spy to face `angle` straight away, as if they'd turned there.
+func face(angle: float) -> void:
+	facing = angle
+	_look_to = angle
+
+
+## Whether `point` is in front of the spy, inside their view.
+func sees(point: Vector2) -> bool:
+	var to := point - eye_position()
+	if to.length() < 1.0:
+		return true
+	var half := deg_to_rad(view_degrees + view_soft_degrees) / 2.0
+	return absf(angle_difference(facing, to.angle())) <= half
+
+
+## Whether `point` shows in the dark window the spy is looking at.
+func sees_in_mirror(point: Vector2, people := false) -> bool:
+	if mirror == null:
+		return false
+	var legs := Reflections.trace(eye_position(), mirror, point, people)
+	return legs.x >= 0.0 and legs.y <= mirror_reach
+
+
 func _move(direction: Vector2, delta: float) -> void:
+	# A quick tap from standing turns on the spot; holding it walks.
 	if direction == Vector2.ZERO:
+		if _hold >= tap_time:
+			_settling = true
+		_hold = 0.0
+		_turning_on_spot = false
+	else:
+		if _hold == 0.0 and velocity.length() < 0.2 * M:
+			_turning_on_spot = true
+		_hold += delta
+		if _hold >= tap_time:
+			_turning_on_spot = false
+		_look_to = direction.angle()
+		_settling = false
+	if direction == Vector2.ZERO or _turning_on_spot:
 		gait = Gait.STILL
 	elif Input.is_action_pressed("run"):
 		gait = Gait.RUN
@@ -128,12 +187,28 @@ func _move(direction: Vector2, delta: float) -> void:
 		gait = Gait.HURRY
 	else:
 		gait = Gait.WALK
-	velocity = velocity.move_toward(direction * _speed(), 12.0 * M * delta)
+	var target := Vector2.ZERO if gait == Gait.STILL else direction * _speed()
+	velocity = velocity.move_toward(target, 12.0 * M * delta)
 	move_and_slide()
-	if direction != Vector2.ZERO:
-		facing = lerp_angle(facing, direction.angle(), 1.0 - exp(-turn_speed * delta))
+	# Coming to a stop in a doorway after walking in: turn to face the street.
+	if _settling and velocity.length() < 0.1 * M:
+		_settling = false
+		var out := _doorway_out()
+		if out != INF:
+			_look_to = out
+	# Turn toward where they're going, or keep turning after a tap.
+	if _look_to != INF:
+		facing = lerp_angle(facing, _look_to, 1.0 - exp(-turn_speed * delta))
 	_lean = _lean.move_toward(Vector2.ZERO, 3.0 * M * delta)
 	_peek = 0.0
+
+
+# The way out of the doorway the spy is standing in, or INF if they aren't in one.
+func _doorway_out() -> float:
+	for block in get_tree().get_nodes_in_group(&"street_blocks"):
+		if block.doorway_contains(global_position):
+			return block.door_outward().angle()
+	return INF
 
 
 func _speed() -> float:
@@ -168,6 +243,7 @@ func _window_in_reach() -> ShopWindow:
 
 
 func _browse(delta: float) -> void:
+	_look_to = INF
 	gait = Gait.STILL
 	velocity = Vector2.ZERO
 	_peek = 0.0
@@ -211,6 +287,7 @@ func _corner(i: int) -> Vector2:
 
 
 func _hug(direction: Vector2, delta: float) -> void:
+	_look_to = INF
 	var a := _corner(0)
 	var b := _corner(1)
 	var along := (b - a).normalized()
