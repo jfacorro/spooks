@@ -3,7 +3,8 @@ extends Node
 ## Runs one tail: sightings (how many times the subject has noticed the spy;
 ## three and they've made them), noticing (how close the subject is to
 ## noticing the spy right now), contact (whether the spy can still see the
-## subject), cover, and how the attempt ends. Sightings and noticing show on
+## subject, directly or in a dark window's glass), cover, and how the attempt
+## ends. Sightings and noticing show on
 ## the meter at the top, and through grain, vignette and the subject's
 ## posture; the cover the spy is in shows under the meter. F2 shows the exact
 ## numbers for playtesting; R restarts any time.
@@ -17,8 +18,8 @@ const BAND_NAMES := ["too close", "close", "tail zone", "far", "lost"]
 const ALERT_NAMES := ["calm", "wary", "suspicious", "burned"]
 ## Each sighting raises the subject's alert level; the third burns the spy.
 const SIGHTINGS_TO_BURN := 3
-const INTRO := "Tail the subject in the grey coat to wherever they're going.\nDon't let them see you, and don't lose them.\n\nWASD / arrows walk   Shift hurry   Space run   E hug a wall, push on to peek   R restart   F2 debug"
-const COVER_NAMES := {&"peeking": "peeking", &"doorway": "in a doorway", &"crowd": "in a crowd"}
+const INTRO := "Tail the subject in the grey coat to wherever they're going.\nDon't let them see you, and don't lose them.\n\nWASD / arrows walk   Shift hurry   Space run   E hug a wall or browse a window   R restart   F2 debug"
+const COVER_NAMES := {&"peeking": "peeking", &"browsing": "browsing a window", &"doorway": "in a doorway", &"crowd": "in a crowd"}
 
 @export var subject: Subject
 @export var spy: TailSpy
@@ -38,6 +39,17 @@ const COVER_NAMES := {&"peeking": "peeking", &"doorway": "in a doorway", &"crowd
 ## Seconds out of contact before the last-seen marker shows, so someone
 ## walking between the spy and the subject doesn't flash it up.
 @export var marker_delay := 0.5
+@export_group("Reflections")
+## The spy sees in one dark window at a time: the one they're facing, within
+## this angle either side of where they face and this far away.
+@export var mirror_range := 8.0 * M
+@export_range(0, 90) var mirror_angle_degrees := 45.0
+## How far into the reflection the spy can see, past the glass: this much
+## standing right at it, falling to `mirror_reach_far` at `mirror_range`.
+@export var mirror_reach_near := 18.0 * M
+@export var mirror_reach_far := 4.0 * M
+## Within this distance of the glass the spy sees the most.
+@export var mirror_close := 1.5 * M
 
 @export_group("Being noticed")
 ## Seconds the subject has to see the spy, out in the open and walking, before
@@ -63,6 +75,12 @@ const COVER_NAMES := {&"peeking": "peeking", &"doorway": "in a doorway", &"crowd
 @export var peek_rate := 0.2
 @export var crowd_rate := 0.3
 @export var doorway_rate := 0.5
+@export var browse_rate := 0.5
+## Standing in a lit shop window's light makes the subject notice the spy
+## this many times as fast, on top of any cover.
+@export var light_rate := 1.3
+## How lit the spy has to be (0 to 1) to count as standing in the light.
+@export var light_threshold := 0.35
 ## Walking with at least this many people within `crowd_radius` is a crowd.
 @export var crowd_size := 3
 @export var crowd_radius := 2.0 * M
@@ -85,8 +103,14 @@ var recovery_progress := 0.0
 ## behind it.
 var notice_rate := 0.0
 var modifier := 1.0
-## The cover the spy is in: &"peeking", &"doorway", &"crowd" or &"" for none.
+## The cover the spy is in: &"peeking", &"browsing", &"doorway", &"crowd" or
+## &"" for none.
 var cover := &""
+## Whether the spy is standing in a lit window's light.
+var in_light := false
+## The dark window the spy is seeing the subject in, or null when they see
+## them directly (or not at all).
+var mirror_window: ShopWindow
 ## How many people the spy is walking with.
 var crowd_count := 0
 
@@ -156,19 +180,42 @@ func alert_name() -> String:
 	return ALERT_NAMES[alert]
 
 
-## The cover the spy is in, in words, or "" for none.
+## The dark window the spy is looking at, if any: the one they face, near
+## enough to make out what's in it.
+func mirror_in_view() -> ShopWindow:
+	return Reflections.window_in_view(spy.eye_position(), spy.facing, mirror_range, deg_to_rad(mirror_angle_degrees))
+
+
+## How far into a reflection the spy can see, past the glass, from `distance`
+## px away from it: further back, the glass shows less.
+func mirror_reach_at(distance: float) -> float:
+	var t := clampf((distance - mirror_close) / maxf(mirror_range - mirror_close, 1.0), 0.0, 1.0)
+	return lerpf(mirror_reach_near, mirror_reach_far, t)
+
+
+## The cover the spy is in, in words, or "" for none. Out of cover, standing
+## in a window's light shows too: it's a risk rather than cover.
 func cover_name() -> String:
+	if cover == &"" and in_light:
+		return "in the light"
 	return COVER_NAMES.get(cover, "")
 
 
 # Contact: a clear line from the spy's eyes to the subject, within range, past
-# walls and people. Out of contact the subject fades out and the lost timer
-# runs.
+# walls and people, or the subject showing in the dark window the spy is
+# standing at. Out of contact the subject fades out and the lost timer runs.
 func _update_contact(delta: float) -> void:
 	var eye := spy.eye_position()
 	var target := subject.global_position
 	var in_range := not subject.is_gone() and eye.distance_to(target) <= contact_range
 	contact = in_range and Occlusion.clear_line(eye, target)
+	mirror_window = null
+	var glass := mirror_in_view()
+	if not contact and not subject.is_gone() and glass != null:
+		var legs := Reflections.trace(eye, glass, target)
+		if legs.x >= 0.0 and legs.y <= mirror_reach_at(legs.x) and legs.x + legs.y <= contact_range:
+			mirror_window = glass
+			contact = true
 	# When it's only people hiding them, those people throw a shadow.
 	if shade != null:
 		shade.people_in_way.clear()
@@ -212,7 +259,11 @@ func _update_noticing(delta: float) -> void:
 	if _counted:
 		return
 	modifier = _modifier()
-	notice_rate = modifier / _notice_time(distance_m())
+	# Seen only in the glass: what counts is how far it is by way of the glass.
+	var distance := distance_m()
+	if subject.caught_by("glass") and not (subject.caught_by("forward") or subject.caught_by("look") or subject.caught_by("glance")):
+		distance = subject.glass_distance / M
+	notice_rate = modifier / _notice_time(distance)
 	if subject.caught_by("glance"):
 		notice_rate *= glance_speedup
 	noticing += notice_rate * delta
@@ -252,8 +303,11 @@ func _update_cover() -> void:
 		with = crowd.walking_with(spy.global_position, spy.velocity, crowd_radius)
 	crowd_count = with.size()
 	cover = &""
+	in_light = _window_light(spy.global_position) >= light_threshold
 	if spy.is_peeking():
 		cover = &"peeking"
+	elif spy.is_browsing():
+		cover = &"browsing"
 	elif walking and _in_doorway(spy.global_position):
 		cover = &"doorway"
 	elif crowd_count >= crowd_size:
@@ -265,6 +319,14 @@ func _update_cover() -> void:
 			pace += person.velocity.length()
 		# A touch faster than them, so the spy can still drift through the group.
 		spy.pace_limit = pace / with.size() + 0.1 * M
+
+
+# How lit `point` is by the brightest lit window near it, 0 to 1.
+func _window_light(point: Vector2) -> float:
+	var brightest := 0.0
+	for window in ShopWindow.all:
+		brightest = maxf(brightest, window.light_at(point))
+	return brightest
 
 
 func _in_doorway(point: Vector2) -> bool:
@@ -281,6 +343,8 @@ func _modifier() -> float:
 	match cover:
 		&"peeking":
 			m = peek_rate
+		&"browsing":
+			m = browse_rate
 		&"doorway":
 			m = doorway_rate
 		&"crowd":
@@ -299,6 +363,8 @@ func _modifier() -> float:
 	var subject_side := _sidewalk_side(subject.global_position)
 	if spy_side != &"" and subject_side != &"" and spy_side != subject_side:
 		m *= 0.6
+	if in_light:
+		m *= light_rate
 	return m
 
 
@@ -347,6 +413,8 @@ func _finish(result: Outcome, block: StreetBlock = null) -> void:
 	spy.frozen = true
 	spy.spotted = false
 	cover = &""
+	in_light = false
+	mirror_window = null
 	noticing = 0.0
 	if shade != null:
 		shade.people_in_way.clear()

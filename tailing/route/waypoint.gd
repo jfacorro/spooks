@@ -4,11 +4,12 @@ extends Node2D
 ## One point on the subject's route. The subject walks to it in a straight
 ## line, then does its action. An action can be limited to a minimum alert
 ## level and given a chance, so the same route plays out differently as the
-## subject gets warier.
+## subject gets warier. CHECK_GLASS has them stop at the nearest dark shop
+## window and watch the street behind them in its reflection.
 
-enum Action { NONE, PAUSE, LOOK_BACK, GLANCE, DOUBLE_BACK, PACE, ENTER }
+enum Action { NONE, PAUSE, LOOK_BACK, GLANCE, DOUBLE_BACK, PACE, ENTER, CHECK_GLASS }
 
-const LETTERS := ["", "P", "L", "G", "D", "S", "E"]
+const LETTERS := ["", "P", "L", "G", "D", "S", "E", "R"]
 const GIZMO := Color(1.0, 0.82, 0.3)
 
 @export var action := Action.NONE:

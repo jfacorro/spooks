@@ -39,9 +39,12 @@ func _process(_delta: float) -> void:
 		"spy gait %s   cover %s   walking with %d   pace limit %s" % [
 			TailSpy.Gait.keys()[d.spy.gait].to_lower(), d.cover if d.cover != &"" else "none", d.crowd_count,
 			"%.1f m/s" % (d.spy.pace_limit / M) if d.spy.pace_limit < INF else "none"],
-		"hugging %s   peeking %s   people %d" % [
+		"hugging %s   peeking %s   browsing %s   in the light %s   people %d" % [
 			"yes" if d.spy.is_hugging() else "no", "yes" if d.spy.is_peeking() else "no",
+			"yes" if d.spy.is_browsing() else "no", "yes" if d.in_light else "no",
 			d.crowd.people_count() if d.crowd != null else 0],
+		"subject in the glass %s   subject checking the glass %s" % [
+			"yes" if d.mirror_window != null else "no", "yes" if d.subject.is_checking_glass() else "no"],
 		"route: %s" % ", ".join(d.subject.picked_options),
 	])
 	if d.recovering:

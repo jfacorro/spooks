@@ -36,6 +36,8 @@ func contains(global_point: Vector2) -> bool:
 
 
 func _refresh() -> void:
+	# Shop windows light the ground.
+	light_mask = 1 | ShopWindow.LIGHT_LAYER
 	match kind:
 		Kind.SIDEWALK:
 			color = SIDEWALK_COLOR

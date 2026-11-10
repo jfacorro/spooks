@@ -2,13 +2,14 @@ class_name Subject
 extends Node2D
 ## The person being tailed. Walks a SubjectRoute and checks behind them now
 ## and then, always with a tell first: the hat starts to turn before a glance,
-## and they slow down before a full look-back. The tail director owns sightings and
+## they slow down before a full look-back, and they slow down and turn to a
+## dark shop window before watching the street behind them in its glass. The tail director owns sightings and
 ## sets `alert`; this script only acts on it.
 
 signal entered_building(block: StreetBlock)
 
 enum Alert { CALM, WARY, SUSPICIOUS, BURNED }
-enum Mode { WAIT, WALK, PAUSE, STOP_DEAD, LOOK_TELL, LOOK, LOOK_RESUME, DOUBLE_BACK, ENTER, GONE }
+enum Mode { WAIT, WALK, PAUSE, STOP_DEAD, LOOK_TELL, LOOK, LOOK_RESUME, DOUBLE_BACK, ENTER, GONE, GLASS_TELL, GLASS }
 enum Head { FORWARD, GLANCE_TELL, GLANCE, GLANCE_RETURN }
 
 const M := 48.0
@@ -19,6 +20,8 @@ const SPOTTED_BOOST := 1.2
 const ALERT_PACE := [1.0, 1.05, 1.1, 1.1]
 ## Seconds between random checks at each alert level: [min, max].
 const CHECK_DELAY := [[12.0, 18.0], [6.0, 10.0], [5.0, 8.0], [1.5, 2.5]]
+## Chance of stopping to check each dark window they pass, by alert level.
+const GLASS_CHANCE := [0.0, 0.25, 0.5, 0.0]
 
 @export var route: SubjectRoute
 @export var walk_speed := 1.4 * M
@@ -47,6 +50,12 @@ const CHECK_DELAY := [[12.0, 18.0], [6.0, 10.0], [5.0, 8.0], [1.5, 2.5]]
 @export_range(0.0, 1.0) var shoulder_share := 0.3
 ## The most the shoulders twist away from the legs.
 @export_range(0, 90) var max_shoulder_degrees := 40.0
+## Checking the glass of a dark window: the tell (slowing and turning to it),
+## then how long they watch the reflection.
+@export var glass_tell := 0.5
+@export var glass_time := 2.0
+## Never two glass checks closer together than this, in seconds.
+@export var glass_gap := 10.0
 ## Double back: how far they walk back toward where they came from, in px.
 @export var double_back_min := 10.0 * M
 @export var double_back_max := 20.0 * M
@@ -55,6 +64,9 @@ var alert := Alert.CALM
 ## How much of them is drawn, 0 to 1: the tail director fades them out when
 ## the spy loses sight of them.
 var shown := 1.0
+## When the last `can_see` saw the point in the glass of a dark window: how far
+## it is by way of the glass, in px.
+var glass_distance := 0.0
 ## Goes up by one each time they start a glance, so each glance can be told apart.
 var glance_count := 0
 ## Names of the route options picked at each fork this attempt.
@@ -91,6 +103,9 @@ var _seen_by: Array[String] = [] # kinds of cone that saw the last point checked
 var _spot_glow := 0.0
 var _time := 0.0
 var _entering_block: StreetBlock
+var _glass: ShopWindow # the window they're checking
+var _last_glass := -INF # _time of the last glass check
+var _passed_windows := {} # dark windows already rolled for
 var _door_fade := 1.0
 var _rng := RandomNumberGenerator.new()
 
@@ -143,6 +158,16 @@ func _physics_process(delta: float) -> void:
 				_set_mode(Mode.WALK)
 		Mode.DOUBLE_BACK:
 			_double_back(delta)
+		Mode.GLASS_TELL:
+			_walk(delta, 0.0, walk_speed / glass_tell)
+			_face_target = _toward_glass()
+			if _mode_time >= glass_tell:
+				_set_mode(Mode.GLASS)
+		Mode.GLASS:
+			_speed = 0.0
+			_face_target = _toward_glass()
+			if _mode_time >= glass_time:
+				_set_mode(Mode.LOOK_RESUME)
 		Mode.ENTER:
 			_door_fade = 1.0 - _mode_time / 0.5
 			if _mode_time >= 0.5:
@@ -183,11 +208,21 @@ func can_see(point: Vector2) -> bool:
 			continue
 		if Occlusion.clear_line(cone.origin, point):
 			_seen_by.append(cone.kind)
+	if is_checking_glass():
+		var path := Reflections.path_length(global_position, _glass, point)
+		if path >= 0.0 and path <= vision_range:
+			glass_distance = path
+			_seen_by.append("glass")
 	return not _seen_by.is_empty()
 
 
+## Whether they're watching the reflection in a dark window right now.
+func is_checking_glass() -> bool:
+	return _mode == Mode.GLASS and _mode_time > 0.2 and _glass != null
+
+
 ## Whether the last `can_see` check saw the point through this kind of cone:
-## "forward", "look" or "glance".
+## "forward", "look", "glance", or "glass" (in a dark window's reflection).
 func caught_by(kind: String) -> bool:
 	return _seen_by.has(kind)
 
@@ -303,10 +338,15 @@ func _arrive(point: Waypoint) -> void:
 			_begin_double_back()
 		Waypoint.Action.PACE:
 			_route_pace = point.pace
+		Waypoint.Action.CHECK_GLASS:
+			var window := _nearest_dark_window(point.global_position, 3.0 * M)
+			if window != null:
+				_begin_glass(window)
 
 
 # Random checks while walking, more often the warier they are.
 func _tick_checks(delta: float) -> void:
+	_maybe_check_glass()
 	if alert >= Alert.WARY and not _bolting:
 		_pace_timer -= delta
 		if _pace_timer <= 0.0:
@@ -332,6 +372,51 @@ func _tick_checks(delta: float) -> void:
 			elif roll < 0.6: _begin_look()
 			elif roll < 0.85: _begin_double_back()
 			else: _set_mode(Mode.STOP_DEAD)
+
+
+# Once wary, they may stop at a dark window they're walking past to check the
+# street behind them in it.
+func _maybe_check_glass() -> void:
+	var chance: float = GLASS_CHANCE[alert]
+	if chance <= 0.0 or _bolting or _mode != Mode.WALK or _head != Head.FORWARD or _time - _last_glass < glass_gap:
+		return
+	for window in Reflections.dark_windows_near(global_position, 2.0 * M):
+		if _passed_windows.has(window):
+			continue
+		# Only once they're level with the glass, not as soon as it's near.
+		var glass := window.segment()
+		var along := (glass[1] - glass[0]).normalized()
+		var t := (global_position - glass[0]).dot(along) / glass[0].distance_to(glass[1])
+		if t < 0.2 or t > 0.8:
+			continue
+		_passed_windows[window] = true
+		if _rng.randf() < chance:
+			_begin_glass(window)
+		return
+
+
+func _begin_glass(window: ShopWindow) -> void:
+	_glass = window
+	_head = Head.FORWARD
+	_last_glass = _time
+	_set_mode(Mode.GLASS_TELL)
+
+
+func _toward_glass() -> float:
+	var glass := _glass.segment()
+	return ((glass[0] + glass[1]) / 2.0 - global_position).angle()
+
+
+func _nearest_dark_window(at: Vector2, radius: float) -> ShopWindow:
+	var best: ShopWindow = null
+	var best_distance := radius
+	for window in Reflections.dark_windows_near(at, radius):
+		var glass := window.segment()
+		var d := Geometry2D.get_closest_point_to_segment(at, glass[0], glass[1]).distance_to(at)
+		if d <= best_distance:
+			best = window
+			best_distance = d
+	return best
 
 
 func _check_delay() -> float:
@@ -483,7 +568,9 @@ func _update_figure(delta: float) -> void:
 # a glance, or staring back down the street after doubling back.
 func _update_cone(delta: float) -> void:
 	var shape := {}
-	if _mode == Mode.LOOK and _mode_time > 0.15:
+	if is_checking_glass():
+		shape = {"kind": "glass"}
+	elif _mode == Mode.LOOK and _mode_time > 0.15:
 		shape = _cone_info("look", _facing, look_degrees)
 	elif _head == Head.GLANCE and _head_time > 0.1:
 		shape = _cone_info("glance", _facing + _gaze, glance_degrees)
@@ -500,6 +587,14 @@ func _update_cone(delta: float) -> void:
 
 func _draw_cone() -> void:
 	if _cone_alpha <= 0.0 or _cone_shape.is_empty():
+		return
+	if _cone_shape.kind == "glass":
+		# What they can see in the glass, in place of a view cone.
+		var shape := Reflections.wedge(global_position, _glass, vision_range)
+		var glow := 0.75 + 0.25 * sin(_time * 16.0)
+		var wedge_tint := Color(CONE_COLOR, CONE_COLOR.a * _cone_alpha * (1.0 + SPOTTED_BOOST * _spot_glow * glow))
+		if shape.size() >= 4 and not Geometry2D.triangulate_polygon(shape).is_empty():
+			_cone.draw_colored_polygon(shape, wedge_tint)
 		return
 	# Fine enough that the shadow behind each person shows as a clean notch.
 	var fan := Occlusion.fan(global_position, _cone_shape.angle, _cone_shape.half, _cone_shape.range, 144)

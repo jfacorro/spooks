@@ -6,8 +6,10 @@ extends CharacterBody2D
 ## way on the world. A pale ring pulses around the spy while the subject sees
 ## them.
 ##
-## Next to a wall, Interact puts the spy's back to it: they sidestep along it,
-## and at an outside corner, pushing on toward it leans them out to peek. The
+## In front of a shop window, Interact has the spy stop and browse it, facing
+## the glass, until they walk off. Next to any other wall, Interact puts the
+## spy's back to it: they sidestep along it, and at an outside corner, pushing
+## on toward it leans them out to peek. The
 ## spy sees from the Eye node, which moves out past the corner while they peek,
 ## so sight shading and contact work around corners; the subject can then only
 ## see the leaning head.
@@ -53,6 +55,7 @@ var _normal := Vector2.ZERO # out from the wall, toward the spy
 var _peek := 0.0
 var _peek_way := 0.0 # -1 toward the edge's first corner, +1 toward its second
 var _lean := Vector2.ZERO
+var _browsing: ShopWindow
 
 @onready var _body: Node2D = $Body
 @onready var _shadow: Node2D = $Shadow
@@ -68,16 +71,25 @@ func _physics_process(delta: float) -> void:
 	if not frozen:
 		direction = Input.get_vector("move_left", "move_right", "move_up", "move_down")
 		if Input.is_action_just_pressed("interact"):
-			if _hugging:
+			if _browsing != null:
+				_browsing = null
+			elif _hugging:
 				_let_go()
 			else:
-				_grab_wall()
+				_browsing = _window_in_reach()
+				if _browsing == null:
+					_grab_wall()
 		if _hugging and Input.is_action_pressed("run"):
 			_let_go()
 	elif _hugging:
 		_let_go()
+	# Walking off ends browsing.
+	if _browsing != null and (frozen or direction != Vector2.ZERO):
+		_browsing = null
 	if _hugging:
 		_hug(direction, delta)
+	elif _browsing != null:
+		_browse(delta)
 	else:
 		_move(direction, delta)
 	_place_eye()
@@ -101,6 +113,10 @@ func is_hugging() -> bool:
 
 func is_peeking() -> bool:
 	return _peek > 0.5
+
+
+func is_browsing() -> bool:
+	return _browsing != null
 
 
 func _move(direction: Vector2, delta: float) -> void:
@@ -127,6 +143,37 @@ func _speed() -> float:
 		Gait.HURRY:
 			return hurry_speed
 	return minf(walk_speed, pace_limit)
+
+
+# --- Browsing a shop window ---------------------------------------------------
+
+# The shop window right in front of the spy, if any: within reach, with the
+# spy facing its glass rather than standing off to one side of it.
+func _window_in_reach() -> ShopWindow:
+	var best: ShopWindow = null
+	var best_distance := hug_reach
+	for window in ShopWindow.all:
+		var glass := window.segment()
+		if (global_position - glass[0]).dot(window.street_side()) <= 0.0:
+			continue
+		var along := glass[1] - glass[0]
+		var t := (global_position - glass[0]).dot(along) / along.length_squared()
+		if t < 0.05 or t > 0.95:
+			continue
+		var d := Geometry2D.get_closest_point_to_segment(global_position, glass[0], glass[1]).distance_to(global_position)
+		if d < best_distance:
+			best = window
+			best_distance = d
+	return best
+
+
+func _browse(delta: float) -> void:
+	gait = Gait.STILL
+	velocity = Vector2.ZERO
+	_peek = 0.0
+	_lean = _lean.move_toward(Vector2.ZERO, 3.0 * M * delta)
+	var toward := (-_browsing.street_side()).angle()
+	facing = lerp_angle(facing, toward, 1.0 - exp(-turn_speed * delta))
 
 
 # --- Hugging walls and peeking -------------------------------------------------
