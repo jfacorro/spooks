@@ -39,8 +39,9 @@ const COVER_NAMES := {&"peeking": "peeking", &"browsing": "browsing a window", &
 ## Seconds out of contact before the last-seen marker shows, so someone
 ## walking between the spy and the subject doesn't flash it up.
 @export var marker_delay := 0.5
-## The spy can see in the glass of dark windows this close to them.
-@export var mirror_range := 10.0 * M
+## The spy sees in a dark window's glass only while standing right at it:
+## in front of it, level with it, and this close.
+@export var mirror_reach := 1.5 * M
 
 @export_group("Being noticed")
 ## Seconds the subject has to see the spy, out in the open and walking, before
@@ -180,21 +181,20 @@ func cover_name() -> String:
 
 
 # Contact: a clear line from the spy's eyes to the subject, within range, past
-# walls and people, or the subject showing in a dark window near the spy. Out
-# of contact the subject fades out and the lost timer runs.
+# walls and people, or the subject showing in the dark window the spy is
+# standing at. Out of contact the subject fades out and the lost timer runs.
 func _update_contact(delta: float) -> void:
 	var eye := spy.eye_position()
 	var target := subject.global_position
 	var in_range := not subject.is_gone() and eye.distance_to(target) <= contact_range
 	contact = in_range and Occlusion.clear_line(eye, target)
 	mirror_window = null
-	if not contact and not subject.is_gone():
-		for window in Reflections.dark_windows_near(eye, mirror_range):
-			var path := Reflections.path_length(eye, window, target)
-			if path >= 0.0 and path <= contact_range:
-				mirror_window = window
-				contact = true
-				break
+	var glass := Reflections.window_in_front(spy.global_position, mirror_reach)
+	if not contact and not subject.is_gone() and glass != null:
+		var path := Reflections.path_length(eye, glass, target)
+		if path >= 0.0 and path <= contact_range:
+			mirror_window = glass
+			contact = true
 	# When it's only people hiding them, those people throw a shadow.
 	if shade != null:
 		shade.people_in_way.clear()

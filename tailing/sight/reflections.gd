@@ -22,6 +22,28 @@ static func dark_windows_near(point: Vector2, radius: float) -> Array[ShopWindow
 	return found
 
 
+## The dark window `point` is standing at: in front of its glass, level with
+## it and within `reach` of it. Null if none.
+static func window_in_front(point: Vector2, reach: float) -> ShopWindow:
+	var best: ShopWindow = null
+	var best_distance := reach
+	for window in ShopWindow.all:
+		if not window.dark:
+			continue
+		var glass := window.segment()
+		if (point - glass[0]).dot(window.street_side()) <= 0.0:
+			continue
+		var along := glass[1] - glass[0]
+		var t := (point - glass[0]).dot(along) / along.length_squared()
+		if t < 0.0 or t > 1.0:
+			continue
+		var d := Geometry2D.get_closest_point_to_segment(point, glass[0], glass[1]).distance_to(point)
+		if d < best_distance:
+			best = window
+			best_distance = d
+	return best
+
+
 ## How far `target` is from `eye` by way of the glass (eye to glass, then
 ## glass to target), or -1 if `eye` can't see `target` in it.
 static func path_length(eye: Vector2, window: ShopWindow, target: Vector2, people := true) -> float:

@@ -140,11 +140,11 @@ Shop windows are mirrors that work for both sides. The subject uses them to chec
 
 **How it works from above.** Each window is a line segment along a building front. To find what someone sees in it, mirror their position across that line; everything inside the wedge from the mirrored point through the window's two ends, on the street side, is visible in the glass, as long as both halves of the real path (to the glass, then on to the point) are clear of walls and people. Distance counts the whole path. A wedge is drawn as a pale shape on the pavement.
 
-**Both wedges move.** Each one reshapes every frame as its owner walks, so the safe spots around a window shift with every step. The spy's wedges show, faint and dashed, for every dark window within 10 m of them, and brighten while the subject is in one. The subject's shows only while they're checking the glass. Reflections work both ways: if the subject is inside your wedge, you are inside theirs, and only their attention decides whether you are seen.
+**Both wedges move.** Each one reshapes every frame as its owner walks, so the safe spots around a window shift with every step. The spy's wedge shows, faint and dashed, only for the dark window they're standing at, and brightens while the subject is in it. The subject's shows only while they're checking the glass. Reflections work both ways: if the subject is inside your wedge, you are inside theirs, and only their attention decides whether you are seen.
 
 **The subject's reflection check.** At a few set points on the route, and now and then once they're wary, the subject stops and watches a dark window for 2 s. Once wary there's a 1 in 4 chance at each dark window they pass, 1 in 2 once suspicious, and never two checks within 10 s. The tell is that they slow down and turn to the glass for half a second first. Anything inside their wedge is seen, and the noticing goes by the distance along the path through the glass.
 
-**The spy's reflection view.** The spy already sees all round, so a reflection only helps where a wall is in the way. Any dark window within 10 m shows you what's in its glass, with nothing to press: if the subject shows in it, you have contact. The corner buildings at the side street have dark windows on their side walls, so from the main street, just short of the corner, the glass shows you who's walking up it without having to peek.
+**The spy's reflection view.** Stand right at a dark window, in front of the glass and within about 1.5 m of it, and it shows you what's in it, with nothing to press: if the subject shows in it, you have contact. Only that one window counts, so the street doesn't fill up with patches; walking past windows does nothing. The spy already sees all round, so a reflection only helps where something is in the way. The corner buildings at the side street also have dark windows on their side walls, which the subject can stop and check as they walk up it.
 
 **Browsing.** Press E in front of a shop window to stop and browse it, facing the glass. It counts as cover, like a doorway. Walking off ends it. Anywhere else along a wall, E hugs the wall as before.
 
@@ -179,7 +179,7 @@ The spy moves the same way as in the demo: 8-way movement, with the body turning
 | Shift / left trigger, hold | Hurry |
 | Space / A, hold | Run |
 | E / X next to a wall | Hug the wall; push toward the corner to peek |
-| E / X at a shop window | Browse it: cover, facing the glass. Dark windows near you show you what's in their glass anyway |
+| E / X at a shop window | Browse it: cover, facing the glass. Standing at a dark window shows you what's in its glass anyway |
 
 **Camera.** The camera follows the spy and leans toward the subject's last known position, so both usually fit on screen. It pulls back on the bridge and moves in underground.
 
@@ -241,7 +241,7 @@ These are starting points for the first playtest, not final numbers. The prototy
 | Noticing drain | Full to empty in about 0.7 s | |
 | Glances | Notice twice as fast | |
 | A new sighting | After 2 s out of the subject's sight | |
-| Mirror view | Dark windows within 10 m of the spy | |
+| Mirror view | Standing within 1.5 m of a dark window's glass, level with it | One window at a time |
 | Glass checks | 0.5 s tell, 2 s watching; 1 in 4 dark windows once wary, 1 in 2 once suspicious; 10 s apart | |
 | Window light | ×1.3 noticing in the pool | |
 

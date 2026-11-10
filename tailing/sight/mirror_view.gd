@@ -1,8 +1,9 @@
 class_name MirrorView
 extends Node2D
-## Shows what the spy can see in the dark windows near them: a faint patch
-## on the street for each one, with dashed edges, brighter while it's the
-## glass the subject is showing in. The tail director decides what counts as
+## Shows what the spy can see in the dark window they're standing at: a faint
+## patch on the street with dashed edges, brighter while the subject is in
+## it. Only one window at a time, and only right at the glass, so the street
+## doesn't fill up with patches. The tail director decides what counts as
 ## seen; this only draws it.
 
 const TINT := Color(0.9, 0.93, 0.97, 0.09)
@@ -12,7 +13,7 @@ const DASH := 18.0
 const GAP := 16.0
 
 @export var director: TailDirector
-## How far from the glass the patches reach, in px.
+## How far from the glass the patch reaches, in px.
 @export var reach := 18.0 * 48.0
 
 
@@ -27,16 +28,17 @@ func _process(_delta: float) -> void:
 func _draw() -> void:
 	if director == null or director.outcome != TailDirector.Outcome.NONE:
 		return
-	var eye := director.spy.eye_position()
-	for window in Reflections.dark_windows_near(eye, director.mirror_range):
-		var shape := Reflections.wedge(eye, window, reach)
-		if shape.size() < 4 or Geometry2D.triangulate_polygon(shape).is_empty():
-			continue
-		draw_colored_polygon(shape, TINT_SUBJECT if window == director.mirror_window else TINT)
-		# Dashed edges: from each end of the glass out to the far edge.
-		var half := shape.size() / 2
-		_dashes(shape[0], shape[shape.size() - 1])
-		_dashes(shape[half - 1], shape[half])
+	var window := Reflections.window_in_front(director.spy.global_position, director.mirror_reach)
+	if window == null:
+		return
+	var shape := Reflections.wedge(director.spy.eye_position(), window, reach)
+	if shape.size() < 4 or Geometry2D.triangulate_polygon(shape).is_empty():
+		return
+	draw_colored_polygon(shape, TINT_SUBJECT if window == director.mirror_window else TINT)
+	# Dashed edges: from each end of the glass out to the far edge.
+	var half := shape.size() / 2
+	_dashes(shape[0], shape[shape.size() - 1])
+	_dashes(shape[half - 1], shape[half])
 
 
 func _dashes(from: Vector2, to: Vector2) -> void:
