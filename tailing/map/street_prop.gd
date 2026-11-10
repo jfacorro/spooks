@@ -1,24 +1,28 @@
 @tool
 class_name StreetProp
 extends StaticBody2D
-## Something solid at the side of the street: a parked car or a newspaper
-## kiosk. Like a StreetBlock, one outline is its drawing, its collision and
-## its sight blocker. It's centred on the node and faces +X; rotate the node
-## to turn it. Props are part of the street, so they're drawn whether or not
-## the spy can see them.
+## Something solid at the side of the street: a parked car, a newspaper
+## kiosk or a bus shelter. Like a StreetBlock, one outline is its drawing, its
+## collision and its sight blocker. It's centred on the node and faces +X;
+## rotate the node to turn it. Props are part of the street, so they're drawn
+## whether or not the spy can see them.
 
-enum Kind { CAR, KIOSK }
+enum Kind { CAR, KIOSK, SHELTER }
 
 const M := 48.0
 const SHADOW_COLOR := Color(0.0, 0.0, 0.02, 0.45)
 const SHADOW_OFFSET := Vector2(10, 10)
 const GLASS := Color(0.1, 0.12, 0.15)
-const CAR_SIZE := Vector2(4.4, 1.85) * M
-const CAR_CORNER := 18.0
+## Cars are 85% of real size, so two lanes of traffic fit between the rows
+## parked along each curb.
+const CAR_SIZE := Vector2(4.4, 1.85) * 0.85 * M
+const CAR_CORNER := 15.0
 const KIOSK_SIZE := Vector2(2.2, 1.2) * M
 const KIOSK_FRAME := Color(0.2, 0.23, 0.28)
 const KIOSK_ROOF := Color(0.32, 0.35, 0.4)
 const PAPERS := Color(0.78, 0.8, 0.82)
+const SHELTER_SIZE := Vector2(4.0, 1.4) * M
+const AD_PANEL := Color(0.72, 0.74, 0.76)
 
 @export var kind := Kind.CAR:
 	set(value):
@@ -54,8 +58,11 @@ func _exit_tree() -> void:
 ## The footprint in local coordinates. A car's rounded corners are kept coarse
 ## here; the drawing smooths them.
 func outline() -> PackedVector2Array:
-	if kind == Kind.CAR:
-		return _rounded(CAR_SIZE, CAR_CORNER, 2)
+	match kind:
+		Kind.CAR:
+			return rounded(CAR_SIZE, CAR_CORNER, 2)
+		Kind.SHELTER:
+			return _box(Rect2(-SHELTER_SIZE / 2.0, SHELTER_SIZE))
 	return _box(Rect2(-KIOSK_SIZE / 2.0, KIOSK_SIZE))
 
 
@@ -74,19 +81,32 @@ func _rebuild() -> void:
 
 
 func _draw() -> void:
-	if kind == Kind.CAR:
-		_draw_car()
-	else:
-		_draw_kiosk()
+	match kind:
+		Kind.CAR:
+			draw_car(self, paint)
+		Kind.SHELTER:
+			_draw_shelter()
+		_:
+			_draw_kiosk()
 
 
-func _draw_car() -> void:
+## A car seen from above, centred on the canvas's origin with its front toward
+## +X. Moving traffic draws its cars with this too.
+static func draw_car(canvas: CanvasItem, car_paint: Color) -> void:
 	var s := CAR_SIZE
-	draw_colored_polygon(_rounded(s, CAR_CORNER, 5), paint)
-	# Windscreen, roof and rear window, front toward +X.
-	draw_rect(Rect2(s.x * 0.1, -s.y * 0.4, s.x * 0.17, s.y * 0.8), GLASS)
-	draw_rect(Rect2(-s.x * 0.25, -s.y * 0.42, s.x * 0.35, s.y * 0.84), paint.lightened(0.08))
-	draw_rect(Rect2(-s.x * 0.36, -s.y * 0.38, s.x * 0.11, s.y * 0.76), GLASS)
+	canvas.draw_colored_polygon(rounded(s, CAR_CORNER, 5), car_paint)
+	# Windscreen, roof and rear window.
+	canvas.draw_rect(Rect2(s.x * 0.1, -s.y * 0.4, s.x * 0.17, s.y * 0.8), GLASS)
+	canvas.draw_rect(Rect2(-s.x * 0.25, -s.y * 0.42, s.x * 0.35, s.y * 0.84), car_paint.lightened(0.08))
+	canvas.draw_rect(Rect2(-s.x * 0.36, -s.y * 0.38, s.x * 0.11, s.y * 0.76), GLASS)
+
+
+# The roof of a bus shelter, with an ad panel at one end.
+func _draw_shelter() -> void:
+	var r := Rect2(-SHELTER_SIZE / 2.0, SHELTER_SIZE)
+	draw_rect(r, KIOSK_FRAME)
+	draw_rect(r.grow(-6.0), KIOSK_ROOF)
+	draw_rect(Rect2(r.position.x + 6.0, r.position.y + 6.0, 10.0, r.size.y - 12.0), AD_PANEL)
 
 
 func _draw_kiosk() -> void:
@@ -97,7 +117,8 @@ func _draw_kiosk() -> void:
 	draw_rect(Rect2(r.position.x + 10.0, r.end.y - 4.0, r.size.x - 20.0, 12.0), PAPERS)
 
 
-func _rounded(size: Vector2, radius: float, steps: int) -> PackedVector2Array:
+## A rectangle of `size` centred on the origin with corners rounded to `radius`.
+static func rounded(size: Vector2, radius: float, steps: int) -> PackedVector2Array:
 	var points := PackedVector2Array()
 	var h := size / 2.0
 	var centres := [

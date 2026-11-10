@@ -19,6 +19,9 @@
 [ext_resource type="Script" path="res://tailing/tail_director.gd" id="17_qui2e"]
 [ext_resource type="Script" path="res://tailing/hud/sighting_meter.gd" id="18_sightings"]
 [ext_resource type="Script" path="res://tailing/sight/mirror_view.gd" id="19_mirror"]
+[ext_resource type="Script" path="res://tailing/traffic/traffic.gd" id="20_traffic"]
+[ext_resource type="Script" path="res://tailing/traffic/traffic_light.gd" id="21_light"]
+[ext_resource type="Script" path="res://tailing/traffic/bus_stop.gd" id="22_stop"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_8kf65"]
 size = Vector2(48, 720)
@@ -38,20 +41,20 @@ kind = 2
 
 [node name="NorthSidewalk" type="Polygon2D" parent="Ground" unique_id=1167694165]
 color = Color(0.45, 0.49, 0.55, 1)
-polygon = PackedVector2Array(-1920, -240, 8880, -240, 8880, -48, -1920, -48)
+polygon = PackedVector2Array(-1920, -240, 8880, -240, 8880, -72, -1920, -72)
 script = ExtResource("1_yd0wj")
 side = &"north"
 
 [node name="Road" type="Polygon2D" parent="Ground" unique_id=1251133047]
 z_index = 1
 color = Color(0.25, 0.28, 0.33, 1)
-polygon = PackedVector2Array(-1920, -48, 8880, -48, 8880, 288, -1920, 288)
+polygon = PackedVector2Array(-1920, -72, 8880, -72, 8880, 312, -1920, 312)
 script = ExtResource("1_yd0wj")
 kind = 1
 
 [node name="SouthSidewalk" type="Polygon2D" parent="Ground" unique_id=873667921]
 color = Color(0.45, 0.49, 0.55, 1)
-polygon = PackedVector2Array(-1920, 288, 8880, 288, 8880, 480, -1920, 480)
+polygon = PackedVector2Array(-1920, 312, 8880, 312, 8880, 480, -1920, 480)
 script = ExtResource("1_yd0wj")
 side = &"south"
 
@@ -64,14 +67,14 @@ kind = 2
 [node name="CrosswalkWest" type="Polygon2D" parent="Ground" unique_id=604708591]
 z_index = 2
 color = Color(0, 0, 0, 0)
-polygon = PackedVector2Array(1632, -48, 1824, -48, 1824, 288, 1632, 288)
+polygon = PackedVector2Array(1632, -72, 1824, -72, 1824, 312, 1632, 312)
 script = ExtResource("1_yd0wj")
 kind = 3
 
 [node name="CrosswalkEast" type="Polygon2D" parent="Ground" unique_id=497627276]
 z_index = 2
 color = Color(0, 0, 0, 0)
-polygon = PackedVector2Array(4896, -48, 5088, -48, 5088, 288, 4896, 288)
+polygon = PackedVector2Array(4896, -72, 5088, -72, 5088, 312, 4896, 312)
 script = ExtResource("1_yd0wj")
 kind = 3
 
@@ -621,95 +624,129 @@ script = ExtResource("3_gssxx")
 [node name="Props" type="Node2D" parent="." unique_id=1799400676]
 
 [node name="NorthCar01" type="StaticBody2D" parent="Props" unique_id=467646437]
-position = Vector2(-1525.5698, 6)
+position = Vector2(-1525.5698, -24.7)
 rotation = 3.1415927
 script = ExtResource("4_g3ifm")
 
 [node name="NorthCar02" type="StaticBody2D" parent="Props" unique_id=1408320754]
-position = Vector2(-638.25024, 6)
+position = Vector2(-638.25024, -24.7)
 rotation = 3.1415927
 script = ExtResource("4_g3ifm")
 
 [node name="NorthCar03" type="StaticBody2D" parent="Props" unique_id=105007979]
-position = Vector2(1237.9147, 6)
+position = Vector2(1237.9147, -24.7)
 rotation = 3.1415927
 script = ExtResource("4_g3ifm")
 paint = Color(0.36, 0.38, 0.42, 1)
 
 [node name="NorthCar04" type="StaticBody2D" parent="Props" unique_id=76157407]
-position = Vector2(2124.0317, 6)
+position = Vector2(2124.0317, -24.7)
 rotation = 3.1415927
 script = ExtResource("4_g3ifm")
 paint = Color(0.22, 0.24, 0.27, 1)
 
 [node name="NorthCar05" type="StaticBody2D" parent="Props" unique_id=1575819407]
-position = Vector2(3045.9595, 6)
+position = Vector2(3045.9595, -24.7)
 rotation = 3.1415927
 script = ExtResource("4_g3ifm")
 paint = Color(0.26, 0.28, 0.32, 1)
 
 [node name="NorthCar06" type="StaticBody2D" parent="Props" unique_id=2138839215]
-position = Vector2(3966.2798, 6)
+position = Vector2(3966.2798, -24.7)
 rotation = 3.1415927
 script = ExtResource("4_g3ifm")
 paint = Color(0.26, 0.28, 0.32, 1)
 
 [node name="NorthCar07" type="StaticBody2D" parent="Props" unique_id=1718827881]
-position = Vector2(6551.2046, 6)
+position = Vector2(6551.2046, -24.7)
 rotation = 3.1415927
 script = ExtResource("4_g3ifm")
 paint = Color(0.22, 0.24, 0.27, 1)
 
 [node name="NorthCar08" type="StaticBody2D" parent="Props" unique_id=2090577970]
-position = Vector2(7527.274, 6)
+position = Vector2(7527.274, -24.7)
 rotation = 3.1415927
 script = ExtResource("4_g3ifm")
 paint = Color(0.42, 0.43, 0.44, 1)
 
 [node name="SouthCar01" type="StaticBody2D" parent="Props" unique_id=2120290874]
-position = Vector2(-1548.1287, 234)
+position = Vector2(-1548.1287, 264.7)
 script = ExtResource("4_g3ifm")
 paint = Color(0.42, 0.43, 0.44, 1)
 
 [node name="SouthCar02" type="StaticBody2D" parent="Props" unique_id=350146366]
-position = Vector2(344.83838, 234)
+position = Vector2(344.83838, 264.7)
 script = ExtResource("4_g3ifm")
 paint = Color(0.26, 0.28, 0.32, 1)
 
 [node name="SouthCar03" type="StaticBody2D" parent="Props" unique_id=23887931]
-position = Vector2(3203.1484, 234)
+position = Vector2(3203.1484, 264.7)
 script = ExtResource("4_g3ifm")
 paint = Color(0.22, 0.24, 0.27, 1)
 
 [node name="SouthCar04" type="StaticBody2D" parent="Props" unique_id=2084051181]
-position = Vector2(4237.4478, 234)
+position = Vector2(4237.4478, 264.7)
 script = ExtResource("4_g3ifm")
 paint = Color(0.26, 0.28, 0.32, 1)
 
 [node name="SouthCar05" type="StaticBody2D" parent="Props" unique_id=1269927102]
-position = Vector2(5596.865, 234)
+position = Vector2(5596.865, 264.7)
 script = ExtResource("4_g3ifm")
 paint = Color(0.22, 0.24, 0.27, 1)
 
 [node name="SouthCar06" type="StaticBody2D" parent="Props" unique_id=320358039]
-position = Vector2(7170.4854, 234)
+position = Vector2(7170.4854, 264.7)
 script = ExtResource("4_g3ifm")
 
 [node name="SouthCar07" type="StaticBody2D" parent="Props" unique_id=86807891]
-position = Vector2(8257.777, 234)
+position = Vector2(8257.777, 264.7)
 script = ExtResource("4_g3ifm")
 paint = Color(0.26, 0.28, 0.32, 1)
 
 [node name="KioskNorth" type="StaticBody2D" parent="Props" unique_id=1042239642]
-position = Vector2(2904, -84)
+position = Vector2(2904, -108)
 rotation = 3.1415927
 script = ExtResource("4_g3ifm")
 kind = 1
 
 [node name="KioskSouth" type="StaticBody2D" parent="Props" unique_id=1953301824]
-position = Vector2(4224, 324)
+position = Vector2(4224, 348)
 script = ExtResource("4_g3ifm")
 kind = 1
+
+[node name="ShelterNorth" type="StaticBody2D" parent="Props"]
+position = Vector2(2544, -120)
+script = ExtResource("4_g3ifm")
+kind = 2
+
+[node name="ShelterSouth" type="StaticBody2D" parent="Props"]
+position = Vector2(2736, 360)
+script = ExtResource("4_g3ifm")
+kind = 2
+
+[node name="Traffic" type="Node2D" parent="." node_paths=PackedStringArray("spy", "subject", "crowd")]
+script = ExtResource("20_traffic")
+spy = NodePath("../Spy")
+subject = NodePath("../Subject")
+crowd = NodePath("../Crowd")
+
+[node name="LightWest" type="Node2D" parent="Traffic"]
+position = Vector2(1728, 120)
+script = ExtResource("21_light")
+
+[node name="LightEast" type="Node2D" parent="Traffic"]
+position = Vector2(4992, 120)
+script = ExtResource("21_light")
+offset = 12.0
+
+[node name="StopNorth" type="Node2D" parent="Traffic"]
+position = Vector2(2532, -72)
+script = ExtResource("22_stop")
+direction = -1
+
+[node name="StopSouth" type="Node2D" parent="Traffic"]
+position = Vector2(2700, 312)
+script = ExtResource("22_stop")
 
 [node name="Crowd" type="Node2D" parent="." unique_id=1974181258 node_paths=PackedStringArray("spy", "subject")]
 script = ExtResource("5_gssxx")
@@ -718,27 +755,27 @@ subject = NodePath("../Subject")
 group_weights = PackedFloat32Array(0.3, 0.25, 0.25, 0.2)
 
 [node name="NorthSidewalk" type="Line2D" parent="Crowd" unique_id=475897243]
-points = PackedVector2Array(-1824, -144, 8784, -144)
-width = 153.6
+points = PackedVector2Array(-1824, -156, 8784, -156)
+width = 129.6
 script = ExtResource("6_e26kv")
 
 [node name="SouthSidewalk" type="Line2D" parent="Crowd" unique_id=881038980]
-points = PackedVector2Array(-1824, 384, 8784, 384)
-width = 153.6
+points = PackedVector2Array(-1824, 396, 8784, 396)
+width = 129.6
 script = ExtResource("6_e26kv")
 
 [node name="CrosswalkWest" type="Line2D" parent="Crowd" unique_id=1911130646]
-points = PackedVector2Array(1728, -144, 1728, 384)
+points = PackedVector2Array(1728, -156, 1728, -84, 1728, 324, 1728, 396)
 width = 144.0
 script = ExtResource("6_e26kv")
 
 [node name="CrosswalkEast" type="Line2D" parent="Crowd" unique_id=2133748345]
-points = PackedVector2Array(4992, -144, 4992, 384)
+points = PackedVector2Array(4992, -156, 4992, -84, 4992, 324, 4992, 396)
 width = 144.0
 script = ExtResource("6_e26kv")
 
 [node name="SideStreet" type="Line2D" parent="Crowd" unique_id=2139113928]
-points = PackedVector2Array(6048, -144, 6048, -2112)
+points = PackedVector2Array(6048, -156, 6048, -2112)
 width = 288.0
 script = ExtResource("6_e26kv")
 
@@ -816,14 +853,16 @@ script = ExtResource("4_e26kv")
 [node name="C1" type="Node2D" parent="Route/Middle/CrossOver" unique_id=216337813]
 position = Vector2(1632, -153.6)
 script = ExtResource("5_7wh6k")
-
-[node name="Curb" type="Node2D" parent="Route/Middle/CrossOver" unique_id=257277690]
-position = Vector2(1728, -100.799995)
-script = ExtResource("5_7wh6k")
 action = 3
 
+[node name="Curb" type="Node2D" parent="Route/Middle/CrossOver" unique_id=257277690 node_paths=PackedStringArray("light")]
+position = Vector2(1728, -86)
+script = ExtResource("5_7wh6k")
+action = 8
+light = NodePath("../../../../Traffic/LightWest")
+
 [node name="Across" type="Node2D" parent="Route/Middle/CrossOver" unique_id=755510162]
-position = Vector2(1728, 384)
+position = Vector2(1728, 396)
 script = ExtResource("5_7wh6k")
 
 [node name="LookBack" type="Node2D" parent="Route/Middle/CrossOver" unique_id=929720934]
@@ -848,14 +887,16 @@ script = ExtResource("5_7wh6k")
 action = 3
 
 [node name="C8" type="Node2D" parent="Route/Middle/CrossOver" unique_id=342435927]
-position = Vector2(4992, 384)
-script = ExtResource("5_7wh6k")
-
-[node name="CurbBack" type="Node2D" parent="Route/Middle/CrossOver" unique_id=1416489236]
-position = Vector2(4992, 331.2)
+position = Vector2(4992, 396)
 script = ExtResource("5_7wh6k")
 action = 3
 chance = 0.7
+
+[node name="CurbBack" type="Node2D" parent="Route/Middle/CrossOver" unique_id=1416489236 node_paths=PackedStringArray("light")]
+position = Vector2(4992, 326)
+script = ExtResource("5_7wh6k")
+action = 8
+light = NodePath("../../../../Traffic/LightEast")
 
 [node name="Back" type="Node2D" parent="Route/Middle/CrossOver" unique_id=1310234599]
 position = Vector2(4992, -153.6)
@@ -924,9 +965,10 @@ position = Vector2(-672, 384)
 [node name="LastSeen" type="Node2D" parent="." unique_id=1523952697]
 script = ExtResource("12_qn7up")
 
-[node name="Debug" type="Node2D" parent="." unique_id=1604894601 node_paths=PackedStringArray("director", "label")]
+[node name="Debug" type="Node2D" parent="." unique_id=1604894601 node_paths=PackedStringArray("director", "label", "traffic")]
 script = ExtResource("13_ivork")
 director = NodePath("../Director")
+traffic = NodePath("../Traffic")
 label = NodePath("../Hud/DebugText")
 
 [node name="Camera" type="Camera2D" parent="." unique_id=2122005248 node_paths=PackedStringArray("director")]

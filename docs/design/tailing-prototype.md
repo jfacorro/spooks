@@ -126,9 +126,9 @@ Cover either breaks the subject's line of sight or makes you look like part of t
 
 Pedestrians walk in sidewalk lanes, wait at lights, and bunch up at shops, stairs and turnstiles. When the spy runs, the people nearby stop and turn to look, which breaks the crowd cover around you.
 
-**Hugging walls and peeking.** Press E next to a wall, parked car or kiosk to put your back to it, and sidestep along it; building fronts carry on from one block to the next. At an outside corner, keep pushing toward it to lean out: you see from your leaning head, so the street round the corner opens up, and the subject can only see that head. Stepping away from the wall, running or pressing E again lets go. Doorway walls work too, so you can peek out of a doorway.
+**Hugging walls and peeking.** Press E next to a wall, parked car, kiosk or bus shelter to put your back to it, and sidestep along it; building fronts carry on from one block to the next. At an outside corner, keep pushing toward it to lean out: you see from your leaning head, so the street round the corner opens up, and the subject can only see that head. Stepping away from the wall, running or pressing E again lets go. Doorway walls work too, so you can peek out of a doorway.
 
-**How the crowd works (step 2).** About 100 people walk alone or in groups of two to four, keeping to the right of walkways laid along the sidewalks, over the crosswalks and up the side street. They come out of shop doors and in from the street ends and head for another door or end, sometimes stopping at a shop window on the way. Walking with three or more people within 2 m who are going your way counts as a crowd; people staring at you don't count.
+**How the crowd works (step 2).** About 100 people walk alone or in groups of two to four, keeping to the right of walkways laid along the sidewalks, over the crosswalks and up the side street. They come out of shop doors and in from the street ends and head for another door or end, sometimes stopping at a shop window on the way. Walking with three or more people within 2 m who are going your way counts as a crowd; people staring at you don't count. From step 4 they keep off the road except on the crosswalks, wait on the curb for the walkers' green, and hurry across.
 
 ## Reflections
 
@@ -147,6 +147,29 @@ Shop windows are mirrors that work for both sides. The subject uses them to chec
 **The spy's reflection view.** The spy uses one dark window at a time: the one they're facing, within 45° of the way they face and up to 8 m away. It shows you what's in its glass, with nothing to press: if the subject shows in it, you have contact. The closer you are, the more it shows: right at the glass you see 18 m of street in it, at 8 m only 4 m, and the further back you stand the narrower the slice of street the glass covers. Facing means the way the spy last walked or turned, so turn toward a window to use it; the street doesn't fill up with patches from every window you pass. With the spy seeing only what's in front of them, the glass is how you watch the street behind you: browse a dark window with your back to the street and the subject shows in it. The corner buildings at the side street also have dark windows on their side walls, which the subject can stop and check as they walk up it.
 
 **Browsing.** Press E in front of a shop window to stop and browse it, facing the glass. It counts as cover, like a doorway. Walking off ends it. Anywhere else along a wall, E hugs the wall as before.
+
+## Traffic
+
+The main road carries a lane of traffic each way. It shapes tailing from the opposite sidewalk and the crossing beat: cars and buses block sight as they pass, and crossing anywhere but on the walkers' green is a gamble.
+
+**The road.** The road is 8 m between the curbs and each sidewalk 3.5 m, so the street still fits on screen from shop front to shop front. Cars are drawn at 85% of real size (3.74 × 1.57 m), and the bus at 10.2 × 2.1 m. That leaves room for a lane each way between the cars parked along each curb. Traffic drives on the right. The side street has none.
+
+**Cars and buses.** A car comes along each lane every 3 to 7 s at about 10 m/s. A bus comes every 45 s, taking turns each way, at 7 m/s. They keep a gap to whatever is ahead and stop at red lights. Like people, they're only drawn where the spy can see them, but they block sight both ways, and the spy can't walk through them. Each bus pulls in at its stop for 6 s, a 10 m wall at the curb with cars queuing behind it. The shelter at each stop is cover, solid like a kiosk.
+
+**Lights.** Both crosswalks have lights, and one cycle is 34 s:
+
+- Cars green, 20 s.
+- Cars amber, 3 s.
+- Everyone red, 1 s.
+- Walkers green, 4 s.
+- Walkers green, blinking, 4 s.
+- Everyone red, 2 s.
+
+The two crossings run 12 s apart. From above, each light faces sideways like a real one. The cars' lights stand on a pole at the curb by the stop line, with an arm out over the lane; the walkers' lights stand on the corners of the crossing. Each lens shows edge-on, as a lit line on the side of the head, and throws its colour along the road toward the traffic it's for. The colours are muted red, amber and green, so the briefcase stays the reddest thing on the street.
+
+**Beating the light.** The subject waits on the curb for the walkers' green like everyone else. If it's already blinking when they get there, they dash across at 4 m/s, and the cars start right behind them. While calm, that only happens by luck. Once wary, half the time they hang back on the curb through the green and go with 1.5 s of blinking left; once suspicious, they do it every time. To follow, you either run through the traffic or wait a whole cycle and keep them in sight from across the road. They glance back before each crossing.
+
+**Horns and getting hit.** A car that has to brake hard (more than 5.5 m/s²) for someone in its lane sounds its horn: arcs off its front, with a placeholder beep. Everyone within 6 m stops and looks at it, whether or not they can see the car, and the subject glances straight at it if they're within 25 m. So stepping out in front of a car draws their eyes to you. A car that can't stop in time knocks the spy down for 3 s: they lie in the road, unable to move, and "knocked down" shows under the meter.
 
 ## The street route
 
@@ -221,9 +244,16 @@ These are starting points for the first playtest, not final numbers. The prototy
 | Spy hurry | 2.5 m/s | |
 | Spy run | 4.5 m/s | |
 | Subject walk | 1.4 m/s | A little slower than the spy, so gaps can be closed |
-| Subject dash | 4 m/s | The crossing only |
+| Subject dash | 4 m/s | Beating the lights at a crossing |
 | Pedestrians | 1.2 to 1.6 m/s | |
-| Cars | 10 m/s (36 km/h) | Buses 7 m/s |
+| Cars | 10 m/s (36 km/h), ±10% | Buses 7 m/s |
+| Road and sidewalks | Road 8 m, sidewalks 3.5 m | The street, 15 m from front to front, still fits on screen |
+| Car size | 85% of real: cars 3.74 × 1.57 m, the bus 10.2 × 2.1 m | Two lanes fit between the parked rows |
+| Traffic | A car every 3 to 7 s each way, a bus every 45 s | Buses wait 6 s at their stop |
+| Light cycle | 34 s: cars 20 s green, 3 s amber; walkers 4 s green, 4 s blinking; 1 s and 2 s all red between | The two crossings 12 s apart |
+| Beating the light | Never while calm, half the time once wary, always once suspicious | They go with 1.5 s of blinking left |
+| Horn | Braking harder than 5.5 m/s² | People within 6 m look; the subject glances if within 25 m |
+| Knocked down | 3 s | |
 | Look-back cone | 120°, 20 m; a glance 60° | Matches the edge of the distance bands |
 | Forward vision | 110°, 20 m | |
 | Looking down from the top of stairs | 30 m, all around | Sees over crowds |
@@ -236,7 +266,7 @@ These are starting points for the first playtest, not final numbers. The prototy
 | A person's sight blocker | 0.3 m radius | About shoulder width from above |
 | Crowd | 3 people within 2 m, going your way | |
 | Running startles | People within 6 m, for 1.5 to 2.5 s | |
-| Parked cars | About one every 30 m on each curb | None at the crosswalks or across from the side street |
+| Parked cars | About one every 30 m on each curb | None at the crosswalks, the bus stops or across from the side street |
 | Hugging a wall | 1 m/s sidestep; the head leans 0.35 m past a corner | |
 | Last-seen marker delay | 0.5 s | |
 | Noticing drain | Full to empty in about 0.7 s | |
