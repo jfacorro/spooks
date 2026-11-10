@@ -4,6 +4,7 @@
 [ext_resource type="Texture2D" path="res://characters/subject/subject_body.svg" id="2_body"]
 [ext_resource type="Texture2D" path="res://characters/subject/subject_briefcase.svg" id="3_case"]
 [ext_resource type="Texture2D" path="res://characters/subject/subject_hat.svg" id="4_hat"]
+[ext_resource type="Texture2D" path="res://characters/subject/subject_legs.svg" id="5_legs"]
 
 [node name="Subject" type="Node2D"]
 z_index = 8
@@ -17,6 +18,12 @@ z_index = 4
 [node name="Shadow" type="CanvasGroup" parent="."]
 self_modulate = Color(0, 0, 0.02, 0.45)
 position = Vector2(6, 6)
+
+[node name="Legs" type="Sprite2D" parent="Shadow"]
+self_modulate = Color(0, 0, 0, 1)
+scale = Vector2(0.5, 0.5)
+texture_filter = 4
+texture = ExtResource("5_legs")
 
 [node name="Body" type="Sprite2D" parent="Shadow"]
 self_modulate = Color(0, 0, 0, 1)
@@ -37,6 +44,11 @@ texture_filter = 4
 texture = ExtResource("4_hat")
 
 [node name="Figure" type="Node2D" parent="."]
+
+[node name="Legs" type="Sprite2D" parent="Figure"]
+scale = Vector2(0.5, 0.5)
+texture_filter = 4
+texture = ExtResource("5_legs")
 
 [node name="Body" type="Sprite2D" parent="Figure"]
 scale = Vector2(0.5, 0.5)

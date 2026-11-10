@@ -17,6 +17,7 @@
 [ext_resource type="PackedScene" path="res://post_process/grain_overlay.tscn" id="15_12x4t"]
 [ext_resource type="Script" path="res://post_process/grain_overlay.gd" id="16_n4d3w"]
 [ext_resource type="Script" path="res://tailing/tail_director.gd" id="17_qui2e"]
+[ext_resource type="Script" path="res://tailing/hud/heat_meter.gd" id="18_heat"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_8kf65"]
 size = Vector2(48, 720)
@@ -824,6 +825,17 @@ theme_override_font_sizes/font_size = 15
 theme_override_colors/font_color = Color(0.93, 0.95, 0.98, 1)
 theme_override_colors/font_outline_color = Color(0.02, 0.03, 0.05, 1)
 theme_override_constants/outline_size = 6
+
+[node name="HeatMeter" type="Control" parent="Hud" node_paths=PackedStringArray("director")]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_top = 22.0
+offset_bottom = 22.0
+grow_horizontal = 2
+mouse_filter = 2
+script = ExtResource("18_heat")
+director = NodePath("../../Director")
 
 [node name="Director" type="Node" parent="." unique_id=128414739 node_paths=PackedStringArray("subject", "spy", "grain", "marker", "message")]
 script = ExtResource("17_qui2e")

@@ -13,6 +13,8 @@ enum Head { FORWARD, GLANCE_TELL, GLANCE, GLANCE_RETURN }
 
 const M := 48.0
 const CONE_COLOR := Color(0.88, 0.92, 0.96, 0.26)
+## How much brighter the cone gets while it's the one seeing the spy.
+const SPOTTED_BOOST := 1.2
 ## How much faster they walk at each alert level.
 const ALERT_PACE := [1.0, 1.05, 1.1, 1.1]
 ## Seconds between random checks at each alert level: [min, max].
@@ -38,13 +40,20 @@ const CHECK_DELAY := [[12.0, 18.0], [6.0, 10.0], [5.0, 8.0], [1.5, 2.5]]
 @export var look_time := 1.5
 @export var glance_tell := 0.3
 @export var glance_time := 0.6
-## How far over the shoulder a glance turns the head.
+## How far over the shoulder a glance looks, shoulders and head together.
 @export_range(90, 180) var glance_turn_degrees := 135.0
+## Share of a look that the shoulders take; the head turns the rest. The legs
+## keep walking forward.
+@export_range(0.0, 1.0) var shoulder_share := 0.3
+## The most the shoulders twist away from the legs.
+@export_range(0, 90) var max_shoulder_degrees := 40.0
 ## Double back: how far they walk back toward where they came from, in px.
 @export var double_back_min := 10.0 * M
 @export var double_back_max := 20.0 * M
 
 var alert := Alert.CALM
+## Goes up by one each time they start a glance, so each glance can be told apart.
+var glance_count := 0
 ## Names of the route options picked at each fork this attempt.
 var picked_options: Array[String] = []
 
@@ -65,7 +74,7 @@ var _check_timer := 0.0
 var _head := Head.FORWARD
 var _head_time := 0.0
 var _head_side := 1.0
-var _hat := 0.0
+var _gaze := 0.0 # where the head looks, relative to the legs
 var _bolting := false
 var _trail := PackedVector2Array()
 var _back_phase := 0
@@ -75,6 +84,9 @@ var _case_offset := Vector2.ZERO
 var _case_turn := 0.0
 var _cone_alpha := 0.0
 var _cone_shape := {}
+var _seen_by: Array[String] = [] # kinds of cone that saw the last point checked
+var _spot_glow := 0.0
+var _time := 0.0
 var _entering_block: StreetBlock
 var _rng := RandomNumberGenerator.new()
 
@@ -145,16 +157,18 @@ func vision() -> Array[Dictionary]:
 	var cones: Array[Dictionary] = []
 	if _mode == Mode.GONE or _mode == Mode.ENTER:
 		return cones
-	cones.append(_cone_info(_facing, forward_degrees))
+	cones.append(_cone_info("forward", _facing, forward_degrees))
 	if _mode == Mode.LOOK and _mode_time > 0.15:
-		cones.append(_cone_info(_facing, look_degrees))
+		cones.append(_cone_info("look", _facing, look_degrees))
 	if _head == Head.GLANCE and _head_time > 0.1:
-		cones.append(_cone_info(_facing + _hat, glance_degrees))
+		cones.append(_cone_info("glance", _facing + _gaze, glance_degrees))
 	return cones
 
 
-## Whether the subject can see `point` right now: inside a cone and in plain view.
+## Whether the subject can see `point` right now: inside a cone and in plain
+## view. Also remembers which cones saw it, so the drawn cone can light up.
 func can_see(point: Vector2) -> bool:
+	_seen_by.clear()
 	for cone in vision():
 		var to: Vector2 = point - cone.origin
 		if to.length() > cone.range:
@@ -162,8 +176,14 @@ func can_see(point: Vector2) -> bool:
 		if to.length() > 1.0 and absf(angle_difference(cone.angle, to.angle())) > cone.half:
 			continue
 		if Occlusion.clear_line(cone.origin, point):
-			return true
-	return false
+			_seen_by.append(cone.kind)
+	return not _seen_by.is_empty()
+
+
+## Whether the last `can_see` check saw the point through this kind of cone:
+## "forward", "look" or "glance".
+func caught_by(kind: String) -> bool:
+	return _seen_by.has(kind)
 
 
 ## Where they're headed (radians), for the last-seen marker.
@@ -320,6 +340,7 @@ func _begin_look() -> void:
 
 
 func _begin_glance() -> void:
+	glance_count += 1
 	_head_side = 1.0 if _rng.randf() < 0.5 else -1.0
 	_head = Head.GLANCE_TELL
 	_head_time = 0.0
@@ -414,19 +435,22 @@ func _update_head(delta: float) -> void:
 				_head = Head.GLANCE
 				_head_time = 0.0
 		Head.GLANCE:
+			# A quick but human turn: most of the way round in about 0.2 s.
 			target = _head_side * deg_to_rad(glance_turn_degrees)
-			rate = 25.0
+			rate = 14.0
 			if _head_time >= glance_time:
 				_head = Head.GLANCE_RETURN
 				_head_time = 0.0
 		Head.GLANCE_RETURN:
-			if _head_time >= 0.25:
+			if _head_time >= 0.3:
 				_head = Head.FORWARD
-	_hat = lerpf(_hat, target, 1.0 - exp(-rate * delta))
+	_gaze = lerpf(_gaze, target, 1.0 - exp(-rate * delta))
 
 
-# Posture: the briefcase swings while they're calm, is held still when they're
-# wary, and is clutched to the chest once they're suspicious.
+# A look turns the shoulders part of the way and the head the rest, while the
+# legs keep pointing where they walk. Posture: the briefcase swings while
+# they're calm, is held still when they're wary, and is clutched to the chest
+# once they're suspicious; it moves with the shoulders.
 func _update_figure(delta: float) -> void:
 	var swing := sin(_stride / 34.0 * PI) * 2.5 * clampf(_speed / walk_speed, 0.0, 1.0)
 	var offset := Vector2(swing, 0.0)
@@ -439,11 +463,14 @@ func _update_figure(delta: float) -> void:
 	var ease_amount := 1.0 - exp(-8.0 * delta) if delta > 0.0 else 1.0
 	_case_offset = _case_offset.lerp(offset, ease_amount)
 	_case_turn = lerpf(_case_turn, turn, ease_amount)
+	var limit := deg_to_rad(max_shoulder_degrees)
+	var shoulders := clampf(_gaze * shoulder_share, -limit, limit)
 	for figure in [_figure, _shadow]:
 		figure.rotation = _facing
-		figure.get_node("Hat").rotation = _hat
-		figure.get_node("Briefcase").position = _case_offset
-		figure.get_node("Briefcase").rotation = _case_turn
+		figure.get_node("Body").rotation = shoulders
+		figure.get_node("Hat").rotation = _gaze
+		figure.get_node("Briefcase").position = _case_offset.rotated(shoulders)
+		figure.get_node("Briefcase").rotation = shoulders + _case_turn
 
 
 # The pale cone is drawn only while they're deliberately checking: a look-back,
@@ -451,14 +478,17 @@ func _update_figure(delta: float) -> void:
 func _update_cone(delta: float) -> void:
 	var shape := {}
 	if _mode == Mode.LOOK and _mode_time > 0.15:
-		shape = _cone_info(_facing, look_degrees)
+		shape = _cone_info("look", _facing, look_degrees)
 	elif _head == Head.GLANCE and _head_time > 0.1:
-		shape = _cone_info(_facing + _hat, glance_degrees)
+		shape = _cone_info("glance", _facing + _gaze, glance_degrees)
 	elif _mode == Mode.DOUBLE_BACK and _back_phase >= 1:
-		shape = _cone_info(_facing, forward_degrees)
+		shape = _cone_info("forward", _facing, forward_degrees)
 	if not shape.is_empty():
 		_cone_shape = shape
 	_cone_alpha = move_toward(_cone_alpha, 1.0 if not shape.is_empty() else 0.0, 8.0 * delta)
+	var spotting := not shape.is_empty() and _seen_by.has(shape.kind)
+	_spot_glow = move_toward(_spot_glow, 1.0 if spotting else 0.0, (10.0 if spotting else 4.0) * delta)
+	_time += delta
 	_cone.queue_redraw()
 
 
@@ -466,11 +496,12 @@ func _draw_cone() -> void:
 	if _cone_alpha <= 0.0 or _cone_shape.is_empty():
 		return
 	var fan := Occlusion.fan(global_position, _cone_shape.angle, _cone_shape.half, _cone_shape.range)
-	var tint := Color(CONE_COLOR, CONE_COLOR.a * _cone_alpha)
+	var pulse := 0.75 + 0.25 * sin(_time * 16.0)
+	var tint := Color(CONE_COLOR, CONE_COLOR.a * _cone_alpha * (1.0 + SPOTTED_BOOST * _spot_glow * pulse))
 	var colors := PackedColorArray([tint, tint, tint])
 	for i in range(1, fan.size() - 1):
 		_cone.draw_primitive(PackedVector2Array([fan[0], fan[i], fan[i + 1]]), colors, PackedVector2Array())
 
 
-func _cone_info(angle: float, degrees: float) -> Dictionary:
-	return {"origin": global_position, "angle": angle, "half": deg_to_rad(degrees) / 2.0, "range": vision_range}
+func _cone_info(kind: String, angle: float, degrees: float) -> Dictionary:
+	return {"kind": kind, "origin": global_position, "angle": angle, "half": deg_to_rad(degrees) / 2.0, "range": vision_range}

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <!-- Top-down subject, lower body: shoes and the hem of the grey overcoat.
+       Stays pointed where they walk while the upper body (subject_body.svg)
+       twists to look back. Same canvas and pivot as the other subject parts:
+       faces right (+X), pivot at the canvas center, drawn at 2x for a Sprite2D
+       scale of 0.5. -->
+  <g id="shoes" fill="#121418">
+    <rect x="80" y="41" width="16" height="12" rx="6"/>
+    <rect x="76" y="75" width="16" height="12" rx="6"/>
+  </g>
+  <ellipse id="coat-skirt" cx="61" cy="64" rx="25" ry="38" fill="#4b535d"/>
+</svg>

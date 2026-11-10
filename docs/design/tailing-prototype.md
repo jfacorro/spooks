@@ -47,7 +47,7 @@ The subject wears a grey coat and carries a red briefcase. It is the only red th
 2. Look, 1.5 s: a pale cone sweeps the street behind them, drawn like the flashlight in the demo.
 3. Resume: they face forward and walk on.
 
-A **glance** happens mid-stride: the subject keeps walking and turns their head most of the way back over one shoulder for about 0.6 s. Its tell is shorter, 0.3 s of the hat starting to turn, with no slow-down. The cone is narrower and aimed over that shoulder, so the strip directly behind them and the other side stay blind.
+A **glance** happens mid-stride: the subject keeps walking and turns their head most of the way back over one shoulder for about 0.6 s. The shoulders twist part of the way and the head does the rest, while the legs keep walking forward; the hat's brim points where they're looking. Its tell is shorter, 0.3 s of the hat starting to turn, with no slow-down. The cone is narrower and aimed over that shoulder, so the strip directly behind them and the other side stay blind.
 
 Random look-backs can be either kind; while the subject is calm, most of them are glances.
 
@@ -71,6 +71,8 @@ Heat only rises while the subject can see you, and how fast depends on how far b
 *Distance bands behind the subject, not to scale.*
 
 Past 20 m the subject can't pick you out, but crowds and corners break your sight. Inside 4 m, a single look adds 40 heat and turns a calm subject wary.
+
+**Glances.** A glance is too short for the per-second rate to add up to much, so being caught by one also adds heat at once: +8 in the tail zone and +15 when close. Inside 4 m the +40 applies instead. Modifiers and familiar face multiply it like the rate.
 
 **Modifiers** multiply the rate for your distance band:
 
@@ -173,8 +175,8 @@ The spy moves the same way as in the demo: 8-way movement, with the body turning
 - Areas outside the spy's sight are darker and grainier, which the existing post-process can do with a sight mask.
 - The subject's red briefcase passes through the colour grade untouched.
 - Look-back cones and reflection wedges are pale and translucent, like the flashlight in the demo.
-- Heat has no bar. Grain and vignette tighten as it rises, and the subject's posture changes with each state.
-- The last-seen marker and its lost-timer ring are the only HUD. A debug overlay on F2 shows exact heat and bands for playtesting.
+- Heat shows on a slim meter at the top of the screen, with ticks where the subject turns wary and suspicious. While the subject is looking right at the spy, the meter says SEEN, the cone that caught them brightens, and a ring pulses around the spy. Grain and vignette also tighten as heat rises, and the subject's posture changes with each state.
+- The heat meter, the last-seen marker and its lost-timer ring are the only HUD. A debug overlay on F2 shows exact heat and bands for playtesting.
 
 ## Prototype scope
 
@@ -233,6 +235,8 @@ Each of these needs your call before implementation starts. Where the doc alread
 - [x] Should heat stay invisible apart from grain, vignette and posture (proposed), or have a small meter?
 
   **Decided:** heat starts invisible, shown only through grain, vignette and posture, and gets revisited after the first playtest.
+
+  **Revised after the first playtest:** being inside a look-back cone often changed nothing you could see, so it was hard to tell when a look counted. Heat now has a small meter, and being seen has its own cue (see Reading the street).
 - [x] Is the train the end of this mission, or does it lead into another physical task, such as photographing a handoff?
 
   **Decided:** the train is not the end. Each mission closes with an objective; see Endings under The street route.

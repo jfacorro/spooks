@@ -2,8 +2,8 @@ class_name TailDirector
 extends Node
 ## Runs one tail: heat (how suspicious the subject is of the spy), contact
 ## (whether the spy can still see the subject), and how the attempt ends. Heat
-## has no meter; it shows through grain, vignette and the subject's posture.
-## F2 shows the numbers for playtesting, and R restarts at any time.
+## shows on the heat meter, and through grain, vignette and the subject's
+## posture. F2 shows the exact numbers for playtesting; R restarts any time.
 
 enum Outcome { NONE, LOST, MADE, DONE }
 
@@ -31,6 +31,11 @@ const INTRO := "Tail the subject in the grey coat to wherever they're going.\nDo
 @export var recovery_time := 10.0
 ## Extra heat, once per look, for being seen inside the closest band.
 @export var too_close_jolt := 40.0
+## Extra heat, once per glance, for being caught by one in the tail zone (10 to
+## 20 m) and when close (4 to 10 m). A glance is too short for the per-second
+## rate alone to matter. Inside 4 m the too-close jolt applies instead.
+@export var glance_jolt_tail := 8.0
+@export var glance_jolt_close := 15.0
 ## Heat lost per second while unseen.
 @export var cool_off := 2.0
 ## Each separate sighting makes the next ones count this much more.
@@ -56,10 +61,12 @@ var modifier := 1.0
 
 var _unseen_for := INF
 var _jolted := false
+var _glance_hit := -1
 var _unseen_since_bolt := false
 var _saw_entering := false
 var _shown_heat := 0.0
-var _intro_time := 0.0
+var _clock := 0.0
+var _message_until := 0.0
 
 
 func _ready() -> void:
@@ -68,7 +75,7 @@ func _ready() -> void:
 	known_heading = deg_to_rad(subject.start_facing_degrees)
 	subject.entered_building.connect(_on_entered_building)
 	marker.visible = false
-	message.text = INTRO
+	_flash(INTRO, 9.0)
 
 
 func _physics_process(delta: float) -> void:
@@ -84,9 +91,8 @@ func _physics_process(delta: float) -> void:
 
 
 func _process(delta: float) -> void:
-	_intro_time += delta
-	if outcome == Outcome.NONE:
-		message.modulate.a = clampf(9.0 - _intro_time, 0.0, 1.0)
+	_clock += delta
+	message.modulate.a = clampf(_message_until - _clock, 0.0, 1.0)
 	# Heat shows as a coarser, tighter picture.
 	_shown_heat = lerpf(_shown_heat, heat / 100.0, 1.0 - exp(-2.0 * delta))
 	var material: ShaderMaterial = grain.get_node("Screen").material
@@ -116,6 +122,11 @@ func alert_name() -> String:
 	return ALERT_NAMES[alert]
 
 
+## Heat never cools below this at the current alert level.
+func heat_floor() -> float:
+	return FLOORS[alert]
+
+
 # Contact: a clear line from the spy to the subject, within range. Out of
 # contact the subject isn't drawn and the lost timer runs.
 func _update_contact(delta: float) -> void:
@@ -142,6 +153,7 @@ func _update_contact(delta: float) -> void:
 
 func _update_heat(delta: float) -> void:
 	seen = subject.can_see(spy.global_position)
+	spy.spotted = seen
 	heat_rate = 0.0
 	if seen:
 		if _unseen_for >= separate_sighting_after:
@@ -152,7 +164,11 @@ func _update_heat(delta: float) -> void:
 			heat += too_close_jolt
 			_jolted = true
 		modifier = _modifier()
-		heat_rate = _band_rate(distance) * modifier * (1.0 + familiar_step * (sightings - 1))
+		var familiar := 1.0 + familiar_step * (sightings - 1)
+		if subject.caught_by("glance") and subject.glance_count != _glance_hit:
+			_glance_hit = subject.glance_count
+			heat += _glance_jolt(distance) * modifier * familiar
+		heat_rate = _band_rate(distance) * modifier * familiar
 		heat += heat_rate * delta
 	else:
 		_unseen_for += delta
@@ -165,6 +181,16 @@ func _update_heat(delta: float) -> void:
 		alert = (alert + 1) as Subject.Alert
 	if alert == Subject.Alert.BURNED and not recovering:
 		_burned()
+
+
+func _glance_jolt(distance: float) -> float:
+	if distance < BANDS[0][0]:
+		return 0.0
+	if distance < BANDS[1][0]:
+		return glance_jolt_close
+	if distance < BANDS[2][0]:
+		return glance_jolt_tail
+	return 0.0
 
 
 func _band_rate(distance: float) -> float:
@@ -209,6 +235,7 @@ func _burned() -> void:
 	recovery_progress = 0.0
 	_unseen_since_bolt = false
 	subject.bolt()
+	_flash("They've made you, and they're running.\nKeep them in sight without being seen.", 5.0)
 
 
 func _update_recovery(delta: float) -> void:
@@ -227,6 +254,7 @@ func _update_recovery(delta: float) -> void:
 		heat = FLOORS[Subject.Alert.SUSPICIOUS]
 		alert = Subject.Alert.SUSPICIOUS
 		subject.calm_down()
+		_flash("They think they've shaken you.", 3.0)
 
 
 func _on_entered_building(block: StreetBlock) -> void:
@@ -239,8 +267,9 @@ func _on_entered_building(block: StreetBlock) -> void:
 func _finish(result: Outcome, block: StreetBlock = null) -> void:
 	outcome = result
 	spy.frozen = true
+	spy.spotted = false
 	marker.visible = false
-	message.modulate.a = 1.0
+	_message_until = INF
 	match result:
 		Outcome.LOST:
 			message.text = "You lost them.\n\nPress R to try again."
@@ -248,3 +277,9 @@ func _finish(result: Outcome, block: StreetBlock = null) -> void:
 			message.text = "They made you.\n\nPress R to try again."
 		Outcome.DONE:
 			message.text = "They went into %s.\n\nTail complete. Press R to go again." % block.address
+
+
+# Shows `text` at the bottom of the screen, fading out after `seconds`.
+func _flash(text: String, seconds: float) -> void:
+	message.text = text
+	_message_until = _clock + seconds

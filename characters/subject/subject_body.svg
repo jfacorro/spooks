@@ -1,14 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
-  <!-- Top-down subject, body only: grey overcoat. The hat and the briefcase are
-       separate sprites on the same canvas so they can move on their own (the
-       hat turns before a look-back; the briefcase shows the subject's
-       posture). Faces right (+X), pivot at the canvas center, drawn at 2x for
-       a Sprite2D scale of 0.5. -->
-  <g id="shoes" fill="#121418">
-    <rect x="80" y="41" width="16" height="12" rx="6"/>
-    <rect x="76" y="75" width="16" height="12" rx="6"/>
-  </g>
-  <ellipse id="coat-skirt" cx="61" cy="64" rx="25" ry="38" fill="#4b535d"/>
+  <!-- Top-down subject, upper body: shoulders and arms of the grey overcoat.
+       Twists toward a look-back while the legs (subject_legs.svg) keep
+       walking. The hat and the briefcase are separate sprites on the same
+       canvas so they can move on their own. Faces right (+X), pivot at the
+       canvas center, drawn at 2x for a Sprite2D scale of 0.5. -->
   <rect id="torso" x="43" y="27" width="42" height="74" rx="21" fill="#6d7681"/>
   <g id="arms" fill="#5b636d">
     <ellipse cx="64" cy="30" rx="16" ry="10.5"/>

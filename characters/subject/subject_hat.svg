@@ -1,10 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
-  <!-- The subject's light felt hat. Same canvas and pivot as subject_body.svg;
-       the crease and pinches point the way the head is facing, so a turning
-       hat is the tell before a look-back. -->
-  <ellipse id="brim" cx="66" cy="64" rx="27" ry="23" fill="#59626c"/>
-  <ellipse id="band" cx="63" cy="64" rx="18" ry="14" fill="#1b1f24"/>
-  <ellipse id="crown" cx="63" cy="64" rx="15.5" ry="11.5" fill="#7c8590"/>
-  <path id="crease" d="M 51 64 Q 63 61.5 75 64" fill="none" stroke="#3a4048" stroke-width="2.5" stroke-linecap="round"/>
-  <path id="pinches" d="M 71 56 L 75 58.5 M 71 72 L 75 69.5" fill="none" stroke="#3a4048" stroke-width="2" stroke-linecap="round"/>
+  <!-- The subject's light felt hat. The brim is snapped down and longer at the
+       front, so from above the hat points where the head is looking: a hat
+       turned over the shoulder reads as a head turned over the shoulder. It is
+       lighter than the coat so it stands out against the shoulders. Same
+       canvas and pivot as the other subject parts. -->
+  <path id="brim" d="M 37 64 C 37 49 50 42 66 42 C 84 42 97 52 97 64 C 97 76 84 86 66 86 C 50 86 37 79 37 64 Z"
+        fill="#8a939e" stroke="#2c3238" stroke-width="2"/>
+  <ellipse id="band" cx="60" cy="64" rx="17.5" ry="14" fill="#1b1f24"/>
+  <ellipse id="crown" cx="60" cy="64" rx="15" ry="11.5" fill="#a7afb9"/>
+  <path id="crease" d="M 48 64 Q 60 61.5 72 64" fill="none" stroke="#5d656f" stroke-width="2.5" stroke-linecap="round"/>
+  <path id="pinches" d="M 68 56 L 72.5 58.5 M 68 72 L 72.5 69.5" fill="none" stroke="#5d656f" stroke-width="2" stroke-linecap="round"/>
 </svg>
