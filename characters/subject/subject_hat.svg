@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <!-- The subject's light felt hat. Same canvas and pivot as subject_body.svg;
+       the crease and pinches point the way the head is facing, so a turning
+       hat is the tell before a look-back. -->
+  <ellipse id="brim" cx="66" cy="64" rx="27" ry="23" fill="#59626c"/>
+  <ellipse id="band" cx="63" cy="64" rx="18" ry="14" fill="#1b1f24"/>
+  <ellipse id="crown" cx="63" cy="64" rx="15.5" ry="11.5" fill="#7c8590"/>
+  <path id="crease" d="M 51 64 Q 63 61.5 75 64" fill="none" stroke="#3a4048" stroke-width="2.5" stroke-linecap="round"/>
+  <path id="pinches" d="M 71 56 L 75 58.5 M 71 72 L 75 69.5" fill="none" stroke="#3a4048" stroke-width="2" stroke-linecap="round"/>
+</svg>

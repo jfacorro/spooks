@@ -1,0 +1,834 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://tailing/map/street_zone.gd" id="1_yd0wj"]
+[ext_resource type="Script" path="res://tailing/map/street_block.gd" id="2_g3ifm"]
+[ext_resource type="Script" path="res://tailing/map/shop_window.gd" id="3_gssxx"]
+[ext_resource type="Script" path="res://tailing/route/subject_route.gd" id="4_e26kv"]
+[ext_resource type="Script" path="res://tailing/route/waypoint.gd" id="5_7wh6k"]
+[ext_resource type="Script" path="res://tailing/route/route_branch.gd" id="6_mdqde"]
+[ext_resource type="Script" path="res://tailing/sight/sight_shade.gd" id="7_wvkha"]
+[ext_resource type="PackedScene" path="res://tailing/actors/subject.tscn" id="8_rwp7t"]
+[ext_resource type="Script" path="res://tailing/actors/subject.gd" id="9_2fbfx"]
+[ext_resource type="PackedScene" path="res://tailing/actors/tail_spy.tscn" id="10_2wbg1"]
+[ext_resource type="Script" path="res://tailing/actors/tail_spy.gd" id="11_hgsas"]
+[ext_resource type="Script" path="res://tailing/sight/last_seen_marker.gd" id="12_qn7up"]
+[ext_resource type="Script" path="res://tailing/tail_debug.gd" id="13_ivork"]
+[ext_resource type="Script" path="res://tailing/tail_camera.gd" id="14_3gca0"]
+[ext_resource type="PackedScene" path="res://post_process/grain_overlay.tscn" id="15_12x4t"]
+[ext_resource type="Script" path="res://post_process/grain_overlay.gd" id="16_n4d3w"]
+[ext_resource type="Script" path="res://tailing/tail_director.gd" id="17_qui2e"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_8kf65"]
+size = Vector2(48, 720)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_c8k64"]
+size = Vector2(48, 720)
+
+[node name="TailStreet" type="Node2D" unique_id=691889562]
+
+[node name="Ground" type="Node2D" parent="." unique_id=252965112]
+
+[node name="Pavement" type="Polygon2D" parent="Ground" unique_id=948712555]
+color = Color(0.4, 0.44, 0.5, 1)
+polygon = PackedVector2Array(-1920, -2880, 8880, -2880, 8880, 1920, -1920, 1920)
+script = ExtResource("1_yd0wj")
+kind = 2
+
+[node name="NorthSidewalk" type="Polygon2D" parent="Ground" unique_id=1167694165]
+color = Color(0.45, 0.49, 0.55, 1)
+polygon = PackedVector2Array(-1920, -240, 8880, -240, 8880, -48, -1920, -48)
+script = ExtResource("1_yd0wj")
+side = &"north"
+
+[node name="Road" type="Polygon2D" parent="Ground" unique_id=1251133047]
+z_index = 1
+color = Color(0.25, 0.28, 0.33, 1)
+polygon = PackedVector2Array(-1920, -48, 8880, -48, 8880, 288, -1920, 288)
+script = ExtResource("1_yd0wj")
+kind = 1
+
+[node name="SouthSidewalk" type="Polygon2D" parent="Ground" unique_id=873667921]
+color = Color(0.45, 0.49, 0.55, 1)
+polygon = PackedVector2Array(-1920, 288, 8880, 288, 8880, 480, -1920, 480)
+script = ExtResource("1_yd0wj")
+side = &"south"
+
+[node name="SideStreet" type="Polygon2D" parent="Ground" unique_id=1735320683]
+color = Color(0.4, 0.44, 0.5, 1)
+polygon = PackedVector2Array(5856, -2160, 6240, -2160, 6240, -240, 5856, -240)
+script = ExtResource("1_yd0wj")
+kind = 2
+
+[node name="CrosswalkWest" type="Polygon2D" parent="Ground" unique_id=604708591]
+z_index = 2
+color = Color(0, 0, 0, 0)
+polygon = PackedVector2Array(1632, -48, 1824, -48, 1824, 288, 1632, 288)
+script = ExtResource("1_yd0wj")
+kind = 3
+
+[node name="CrosswalkEast" type="Polygon2D" parent="Ground" unique_id=497627276]
+z_index = 2
+color = Color(0, 0, 0, 0)
+polygon = PackedVector2Array(4896, -48, 5088, -48, 5088, 288, 4896, 288)
+script = ExtResource("1_yd0wj")
+kind = 3
+
+[node name="Buildings" type="Node2D" parent="." unique_id=1146437185]
+
+[node name="North01" type="StaticBody2D" parent="Buildings" unique_id=1042084548]
+position = Vector2(-1920, -2880)
+script = ExtResource("2_g3ifm")
+size = Vector2(1440, 2640)
+door_side = 3
+door_offset = 648.0
+
+[node name="Window1" type="Node2D" parent="Buildings/North01" unique_id=391726728]
+position = Vector2(48, 2640)
+script = ExtResource("3_gssxx")
+
+[node name="Window2" type="Node2D" parent="Buildings/North01" unique_id=1030879591]
+position = Vector2(744, 2640)
+script = ExtResource("3_gssxx")
+dark = false
+
+[node name="North02" type="StaticBody2D" parent="Buildings" unique_id=784920677]
+position = Vector2(-480, -2880)
+script = ExtResource("2_g3ifm")
+size = Vector2(672, 2640)
+door_side = 3
+door_offset = 304.0
+roof_shade = 1
+
+[node name="Window1" type="Node2D" parent="Buildings/North02" unique_id=43334949]
+position = Vector2(48, 2640)
+script = ExtResource("3_gssxx")
+
+[node name="Window2" type="Node2D" parent="Buildings/North02" unique_id=1190187640]
+position = Vector2(400, 2640)
+script = ExtResource("3_gssxx")
+
+[node name="North03" type="StaticBody2D" parent="Buildings" unique_id=1311008068]
+position = Vector2(192, -2880)
+script = ExtResource("2_g3ifm")
+size = Vector2(576, 2640)
+door_side = 3
+door_offset = 256.0
+roof_shade = 2
+address = "the café"
+
+[node name="Window1" type="Node2D" parent="Buildings/North03" unique_id=493978716]
+position = Vector2(48, 2640)
+script = ExtResource("3_gssxx")
+dark = false
+
+[node name="Window2" type="Node2D" parent="Buildings/North03" unique_id=29672465]
+position = Vector2(352, 2640)
+script = ExtResource("3_gssxx")
+dark = false
+
+[node name="North04" type="StaticBody2D" parent="Buildings" unique_id=48437604]
+position = Vector2(768, -2880)
+script = ExtResource("2_g3ifm")
+size = Vector2(576, 2640)
+door_side = 3
+door_offset = 256.0
+
+[node name="Window1" type="Node2D" parent="Buildings/North04" unique_id=215598742]
+position = Vector2(48, 2640)
+script = ExtResource("3_gssxx")
+
+[node name="Window2" type="Node2D" parent="Buildings/North04" unique_id=1123279558]
+position = Vector2(352, 2640)
+script = ExtResource("3_gssxx")
+dark = false
+
+[node name="North05" type="StaticBody2D" parent="Buildings" unique_id=700856763]
+position = Vector2(1344, -2880)
+script = ExtResource("2_g3ifm")
+size = Vector2(624, 2640)
+door_side = 3
+door_offset = 280.0
+roof_shade = 1
+
+[node name="Window1" type="Node2D" parent="Buildings/North05" unique_id=73405387]
+position = Vector2(48, 2640)
+script = ExtResource("3_gssxx")
+
+[node name="Window2" type="Node2D" parent="Buildings/North05" unique_id=1928593145]
+position = Vector2(376, 2640)
+script = ExtResource("3_gssxx")
+
+[node name="North06" type="StaticBody2D" parent="Buildings" unique_id=720067021]
+position = Vector2(1968, -2880)
+script = ExtResource("2_g3ifm")
+size = Vector2(528, 2640)
+door_side = 3
+door_offset = 240.0
+roof_shade = 2
+
+[node name="Window1" type="Node2D" parent="Buildings/North06" unique_id=735147743]
+position = Vector2(48, 2640)
+script = ExtResource("3_gssxx")
+dark = false
+
+[node name="Window2" type="Node2D" parent="Buildings/North06" unique_id=519300616]
+position = Vector2(336, 2640)
+script = ExtResource("3_gssxx")
+
+[node name="North07" type="StaticBody2D" parent="Buildings" unique_id=1938614850]
+position = Vector2(2496, -2880)
+script = ExtResource("2_g3ifm")
+size = Vector2(576, 2640)
+door_side = 3
+door_offset = 256.0
+
+[node name="Window1" type="Node2D" parent="Buildings/North07" unique_id=550459351]
+position = Vector2(48, 2640)
+script = ExtResource("3_gssxx")
+
+[node name="Window2" type="Node2D" parent="Buildings/North07" unique_id=1178298008]
+position = Vector2(352, 2640)
+script = ExtResource("3_gssxx")
+dark = false
+
+[node name="North08" type="StaticBody2D" parent="Buildings" unique_id=1512040774]
+position = Vector2(3072, -2880)
+script = ExtResource("2_g3ifm")
+size = Vector2(624, 2640)
+door_side = 3
+door_offset = 280.0
+roof_shade = 1
+
+[node name="Window1" type="Node2D" parent="Buildings/North08" unique_id=301226181]
+position = Vector2(48, 2640)
+script = ExtResource("3_gssxx")
+
+[node name="Window2" type="Node2D" parent="Buildings/North08" unique_id=469697426]
+position = Vector2(376, 2640)
+script = ExtResource("3_gssxx")
+
+[node name="North09" type="StaticBody2D" parent="Buildings" unique_id=1198467903]
+position = Vector2(3696, -2880)
+script = ExtResource("2_g3ifm")
+size = Vector2(528, 2640)
+door_side = 3
+door_offset = 240.0
+roof_shade = 2
+
+[node name="Window1" type="Node2D" parent="Buildings/North09" unique_id=81216050]
+position = Vector2(48, 2640)
+script = ExtResource("3_gssxx")
+dark = false
+
+[node name="Window2" type="Node2D" parent="Buildings/North09" unique_id=625245200]
+position = Vector2(336, 2640)
+script = ExtResource("3_gssxx")
+
+[node name="North10" type="StaticBody2D" parent="Buildings" unique_id=28921523]
+position = Vector2(4224, -2880)
+script = ExtResource("2_g3ifm")
+size = Vector2(576, 2640)
+door_side = 3
+door_offset = 256.0
+
+[node name="Window1" type="Node2D" parent="Buildings/North10" unique_id=1910076012]
+position = Vector2(48, 2640)
+script = ExtResource("3_gssxx")
+
+[node name="Window2" type="Node2D" parent="Buildings/North10" unique_id=1273118922]
+position = Vector2(352, 2640)
+script = ExtResource("3_gssxx")
+dark = false
+
+[node name="North11" type="StaticBody2D" parent="Buildings" unique_id=889187713]
+position = Vector2(4800, -2880)
+script = ExtResource("2_g3ifm")
+size = Vector2(528, 2640)
+door_side = 3
+door_offset = 240.0
+roof_shade = 1
+
+[node name="Window1" type="Node2D" parent="Buildings/North11" unique_id=1681870950]
+position = Vector2(48, 2640)
+script = ExtResource("3_gssxx")
+
+[node name="Window2" type="Node2D" parent="Buildings/North11" unique_id=1197497699]
+position = Vector2(336, 2640)
+script = ExtResource("3_gssxx")
+
+[node name="North12" type="StaticBody2D" parent="Buildings" unique_id=715366422]
+position = Vector2(5328, -2880)
+script = ExtResource("2_g3ifm")
+size = Vector2(528, 2640)
+door_side = 2
+door_offset = 1404.0
+roof_shade = 2
+address = "the side door of the Halden Hotel"
+
+[node name="Window1" type="Node2D" parent="Buildings/North12" unique_id=734971527]
+position = Vector2(48, 2640)
+script = ExtResource("3_gssxx")
+dark = false
+
+[node name="Window2" type="Node2D" parent="Buildings/North12" unique_id=1577885925]
+position = Vector2(312, 2640)
+script = ExtResource("3_gssxx")
+
+[node name="North13" type="StaticBody2D" parent="Buildings" unique_id=1616557596]
+position = Vector2(6240, -2880)
+script = ExtResource("2_g3ifm")
+size = Vector2(576, 2640)
+door_side = 4
+door_offset = 1980.0
+address = "the print shop at number 9"
+
+[node name="Window1" type="Node2D" parent="Buildings/North13" unique_id=1189077877]
+position = Vector2(48, 2640)
+script = ExtResource("3_gssxx")
+
+[node name="Window2" type="Node2D" parent="Buildings/North13" unique_id=1959578793]
+position = Vector2(360, 2640)
+script = ExtResource("3_gssxx")
+dark = false
+
+[node name="North14" type="StaticBody2D" parent="Buildings" unique_id=1996240567]
+position = Vector2(6816, -2880)
+script = ExtResource("2_g3ifm")
+size = Vector2(624, 2640)
+door_side = 3
+door_offset = 280.0
+roof_shade = 1
+
+[node name="Window1" type="Node2D" parent="Buildings/North14" unique_id=1067551136]
+position = Vector2(48, 2640)
+script = ExtResource("3_gssxx")
+
+[node name="Window2" type="Node2D" parent="Buildings/North14" unique_id=1461895288]
+position = Vector2(376, 2640)
+script = ExtResource("3_gssxx")
+
+[node name="North15" type="StaticBody2D" parent="Buildings" unique_id=297706800]
+position = Vector2(7440, -2880)
+script = ExtResource("2_g3ifm")
+size = Vector2(1440, 2640)
+door_side = 3
+door_offset = 648.0
+roof_shade = 2
+
+[node name="Window1" type="Node2D" parent="Buildings/North15" unique_id=1837867868]
+position = Vector2(48, 2640)
+script = ExtResource("3_gssxx")
+dark = false
+
+[node name="Window2" type="Node2D" parent="Buildings/North15" unique_id=695405016]
+position = Vector2(744, 2640)
+script = ExtResource("3_gssxx")
+
+[node name="SideStreetEnd" type="StaticBody2D" parent="Buildings" unique_id=650133351]
+position = Vector2(5856, -2880)
+script = ExtResource("2_g3ifm")
+size = Vector2(384, 720)
+
+[node name="South01" type="StaticBody2D" parent="Buildings" unique_id=1589966656]
+position = Vector2(-1920, 480)
+script = ExtResource("2_g3ifm")
+size = Vector2(1344, 1440)
+door_side = 1
+door_offset = 608.0
+roof_shade = 1
+
+[node name="Window1" type="Node2D" parent="Buildings/South01" unique_id=1448208374]
+position = Vector2(192, 0)
+rotation = 3.1415927
+script = ExtResource("3_gssxx")
+
+[node name="Window2" type="Node2D" parent="Buildings/South01" unique_id=1812304758]
+position = Vector2(848, 0)
+rotation = 3.1415927
+script = ExtResource("3_gssxx")
+dark = false
+
+[node name="South02" type="StaticBody2D" parent="Buildings" unique_id=1910829714]
+position = Vector2(-576, 480)
+script = ExtResource("2_g3ifm")
+size = Vector2(672, 1440)
+door_side = 1
+door_offset = 304.0
+roof_shade = 2
+
+[node name="Window1" type="Node2D" parent="Buildings/South02" unique_id=1009632334]
+position = Vector2(192, 0)
+rotation = 3.1415927
+script = ExtResource("3_gssxx")
+
+[node name="Window2" type="Node2D" parent="Buildings/South02" unique_id=1593068983]
+position = Vector2(544, 0)
+rotation = 3.1415927
+script = ExtResource("3_gssxx")
+
+[node name="South03" type="StaticBody2D" parent="Buildings" unique_id=1787586095]
+position = Vector2(96, 480)
+script = ExtResource("2_g3ifm")
+size = Vector2(624, 1440)
+door_side = 1
+door_offset = 280.0
+
+[node name="Window1" type="Node2D" parent="Buildings/South03" unique_id=86834941]
+position = Vector2(192, 0)
+rotation = 3.1415927
+script = ExtResource("3_gssxx")
+dark = false
+
+[node name="Window2" type="Node2D" parent="Buildings/South03" unique_id=395547649]
+position = Vector2(520, 0)
+rotation = 3.1415927
+script = ExtResource("3_gssxx")
+
+[node name="South04" type="StaticBody2D" parent="Buildings" unique_id=1458692008]
+position = Vector2(720, 480)
+script = ExtResource("2_g3ifm")
+size = Vector2(576, 1440)
+door_side = 1
+door_offset = 256.0
+roof_shade = 1
+
+[node name="Window1" type="Node2D" parent="Buildings/South04" unique_id=1298908476]
+position = Vector2(192, 0)
+rotation = 3.1415927
+script = ExtResource("3_gssxx")
+
+[node name="Window2" type="Node2D" parent="Buildings/South04" unique_id=168827190]
+position = Vector2(496, 0)
+rotation = 3.1415927
+script = ExtResource("3_gssxx")
+dark = false
+
+[node name="South05" type="StaticBody2D" parent="Buildings" unique_id=364574917]
+position = Vector2(1296, 480)
+script = ExtResource("2_g3ifm")
+size = Vector2(528, 1440)
+door_side = 1
+door_offset = 240.0
+roof_shade = 2
+
+[node name="Window1" type="Node2D" parent="Buildings/South05" unique_id=630403626]
+position = Vector2(192, 0)
+rotation = 3.1415927
+script = ExtResource("3_gssxx")
+
+[node name="Window2" type="Node2D" parent="Buildings/South05" unique_id=823339409]
+position = Vector2(480, 0)
+rotation = 3.1415927
+script = ExtResource("3_gssxx")
+
+[node name="South06" type="StaticBody2D" parent="Buildings" unique_id=1990247763]
+position = Vector2(1824, 480)
+script = ExtResource("2_g3ifm")
+size = Vector2(624, 1440)
+door_side = 1
+door_offset = 280.0
+
+[node name="Window1" type="Node2D" parent="Buildings/South06" unique_id=64569630]
+position = Vector2(192, 0)
+rotation = 3.1415927
+script = ExtResource("3_gssxx")
+dark = false
+
+[node name="Window2" type="Node2D" parent="Buildings/South06" unique_id=1933546720]
+position = Vector2(520, 0)
+rotation = 3.1415927
+script = ExtResource("3_gssxx")
+
+[node name="South07" type="StaticBody2D" parent="Buildings" unique_id=717986720]
+position = Vector2(2448, 480)
+script = ExtResource("2_g3ifm")
+size = Vector2(576, 1440)
+door_side = 1
+door_offset = 256.0
+roof_shade = 1
+
+[node name="Window1" type="Node2D" parent="Buildings/South07" unique_id=1966488464]
+position = Vector2(192, 0)
+rotation = 3.1415927
+script = ExtResource("3_gssxx")
+
+[node name="Window2" type="Node2D" parent="Buildings/South07" unique_id=1478836744]
+position = Vector2(496, 0)
+rotation = 3.1415927
+script = ExtResource("3_gssxx")
+dark = false
+
+[node name="South08" type="StaticBody2D" parent="Buildings" unique_id=2023566715]
+position = Vector2(3024, 480)
+script = ExtResource("2_g3ifm")
+size = Vector2(624, 1440)
+door_side = 1
+door_offset = 280.0
+roof_shade = 2
+
+[node name="Window1" type="Node2D" parent="Buildings/South08" unique_id=756696889]
+position = Vector2(192, 0)
+rotation = 3.1415927
+script = ExtResource("3_gssxx")
+
+[node name="Window2" type="Node2D" parent="Buildings/South08" unique_id=259799362]
+position = Vector2(520, 0)
+rotation = 3.1415927
+script = ExtResource("3_gssxx")
+
+[node name="South09" type="StaticBody2D" parent="Buildings" unique_id=1865601241]
+position = Vector2(3648, 480)
+script = ExtResource("2_g3ifm")
+size = Vector2(624, 1440)
+door_side = 1
+door_offset = 280.0
+
+[node name="Window1" type="Node2D" parent="Buildings/South09" unique_id=1748147550]
+position = Vector2(192, 0)
+rotation = 3.1415927
+script = ExtResource("3_gssxx")
+dark = false
+
+[node name="Window2" type="Node2D" parent="Buildings/South09" unique_id=1824162178]
+position = Vector2(520, 0)
+rotation = 3.1415927
+script = ExtResource("3_gssxx")
+
+[node name="South10" type="StaticBody2D" parent="Buildings" unique_id=994973767]
+position = Vector2(4272, 480)
+script = ExtResource("2_g3ifm")
+size = Vector2(576, 1440)
+door_side = 1
+door_offset = 256.0
+roof_shade = 1
+
+[node name="Window1" type="Node2D" parent="Buildings/South10" unique_id=531435849]
+position = Vector2(192, 0)
+rotation = 3.1415927
+script = ExtResource("3_gssxx")
+
+[node name="Window2" type="Node2D" parent="Buildings/South10" unique_id=1978729798]
+position = Vector2(496, 0)
+rotation = 3.1415927
+script = ExtResource("3_gssxx")
+dark = false
+
+[node name="South11" type="StaticBody2D" parent="Buildings" unique_id=1725999667]
+position = Vector2(4848, 480)
+script = ExtResource("2_g3ifm")
+size = Vector2(624, 1440)
+door_side = 1
+door_offset = 280.0
+roof_shade = 2
+
+[node name="Window1" type="Node2D" parent="Buildings/South11" unique_id=390973859]
+position = Vector2(192, 0)
+rotation = 3.1415927
+script = ExtResource("3_gssxx")
+
+[node name="Window2" type="Node2D" parent="Buildings/South11" unique_id=1577321407]
+position = Vector2(520, 0)
+rotation = 3.1415927
+script = ExtResource("3_gssxx")
+
+[node name="South12" type="StaticBody2D" parent="Buildings" unique_id=400930512]
+position = Vector2(5472, 480)
+script = ExtResource("2_g3ifm")
+size = Vector2(624, 1440)
+door_side = 1
+door_offset = 280.0
+
+[node name="Window1" type="Node2D" parent="Buildings/South12" unique_id=285816378]
+position = Vector2(192, 0)
+rotation = 3.1415927
+script = ExtResource("3_gssxx")
+dark = false
+
+[node name="Window2" type="Node2D" parent="Buildings/South12" unique_id=293244097]
+position = Vector2(520, 0)
+rotation = 3.1415927
+script = ExtResource("3_gssxx")
+
+[node name="South13" type="StaticBody2D" parent="Buildings" unique_id=1588423595]
+position = Vector2(6096, 480)
+script = ExtResource("2_g3ifm")
+size = Vector2(624, 1440)
+door_side = 1
+door_offset = 280.0
+roof_shade = 1
+
+[node name="Window1" type="Node2D" parent="Buildings/South13" unique_id=164846233]
+position = Vector2(192, 0)
+rotation = 3.1415927
+script = ExtResource("3_gssxx")
+
+[node name="Window2" type="Node2D" parent="Buildings/South13" unique_id=1278850164]
+position = Vector2(520, 0)
+rotation = 3.1415927
+script = ExtResource("3_gssxx")
+dark = false
+
+[node name="South14" type="StaticBody2D" parent="Buildings" unique_id=1362958625]
+position = Vector2(6720, 480)
+script = ExtResource("2_g3ifm")
+size = Vector2(576, 1440)
+door_side = 1
+door_offset = 256.0
+roof_shade = 2
+
+[node name="Window1" type="Node2D" parent="Buildings/South14" unique_id=291433760]
+position = Vector2(192, 0)
+rotation = 3.1415927
+script = ExtResource("3_gssxx")
+
+[node name="Window2" type="Node2D" parent="Buildings/South14" unique_id=1682655275]
+position = Vector2(496, 0)
+rotation = 3.1415927
+script = ExtResource("3_gssxx")
+
+[node name="South15" type="StaticBody2D" parent="Buildings" unique_id=632152533]
+position = Vector2(7296, 480)
+script = ExtResource("2_g3ifm")
+size = Vector2(1584, 1440)
+door_side = 1
+door_offset = 712.0
+
+[node name="Window1" type="Node2D" parent="Buildings/South15" unique_id=1589124257]
+position = Vector2(192, 0)
+rotation = 3.1415927
+script = ExtResource("3_gssxx")
+dark = false
+
+[node name="Window2" type="Node2D" parent="Buildings/South15" unique_id=109308203]
+position = Vector2(952, 0)
+rotation = 3.1415927
+script = ExtResource("3_gssxx")
+
+[node name="Bounds" type="StaticBody2D" parent="." unique_id=200468946]
+
+[node name="WestEnd" type="CollisionShape2D" parent="Bounds" unique_id=858162899]
+position = Vector2(-960, 120)
+shape = SubResource("RectangleShape2D_8kf65")
+
+[node name="EastEnd" type="CollisionShape2D" parent="Bounds" unique_id=2019947109]
+position = Vector2(7680, 120)
+shape = SubResource("RectangleShape2D_c8k64")
+
+[node name="Route" type="Node2D" parent="." unique_id=1255084775]
+z_index = 9
+script = ExtResource("4_e26kv")
+
+[node name="StepOut" type="Node2D" parent="Route" unique_id=1924516784]
+position = Vector2(484, -153.6)
+script = ExtResource("5_7wh6k")
+
+[node name="FirstGlance" type="Node2D" parent="Route" unique_id=1609800429]
+position = Vector2(1056, -153.6)
+script = ExtResource("5_7wh6k")
+action = 3
+
+[node name="Middle" type="Node2D" parent="Route" unique_id=1642360091]
+script = ExtResource("6_mdqde")
+
+[node name="NorthSide" type="Node2D" parent="Route/Middle" unique_id=1571566378]
+script = ExtResource("4_e26kv")
+
+[node name="N1" type="Node2D" parent="Route/Middle/NorthSide" unique_id=1968543574]
+position = Vector2(1920, -153.6)
+script = ExtResource("5_7wh6k")
+
+[node name="WindowShop" type="Node2D" parent="Route/Middle/NorthSide" unique_id=932820271]
+position = Vector2(2088, -201.59999)
+script = ExtResource("5_7wh6k")
+action = 1
+face_degrees = -90.0
+
+[node name="LookBack" type="Node2D" parent="Route/Middle/NorthSide" unique_id=1106332336]
+position = Vector2(2880, -153.6)
+script = ExtResource("5_7wh6k")
+action = 2
+
+[node name="N4" type="Node2D" parent="Route/Middle/NorthSide" unique_id=875004004]
+position = Vector2(3744, -153.6)
+script = ExtResource("5_7wh6k")
+action = 3
+chance = 0.4
+
+[node name="DoubleBack" type="Node2D" parent="Route/Middle/NorthSide" unique_id=1776683812]
+position = Vector2(4320, -153.6)
+script = ExtResource("5_7wh6k")
+action = 4
+min_alert = 2
+
+[node name="N6" type="Node2D" parent="Route/Middle/NorthSide" unique_id=68611212]
+position = Vector2(4800, -153.6)
+script = ExtResource("5_7wh6k")
+action = 3
+chance = 0.6
+
+[node name="CrossOver" type="Node2D" parent="Route/Middle" unique_id=1632449380]
+script = ExtResource("4_e26kv")
+
+[node name="C1" type="Node2D" parent="Route/Middle/CrossOver" unique_id=216337813]
+position = Vector2(1632, -153.6)
+script = ExtResource("5_7wh6k")
+
+[node name="Curb" type="Node2D" parent="Route/Middle/CrossOver" unique_id=257277690]
+position = Vector2(1728, -100.799995)
+script = ExtResource("5_7wh6k")
+action = 3
+
+[node name="Across" type="Node2D" parent="Route/Middle/CrossOver" unique_id=755510162]
+position = Vector2(1728, 384)
+script = ExtResource("5_7wh6k")
+
+[node name="LookBack" type="Node2D" parent="Route/Middle/CrossOver" unique_id=929720934]
+position = Vector2(2640, 384)
+script = ExtResource("5_7wh6k")
+action = 2
+
+[node name="WindowShop" type="Node2D" parent="Route/Middle/CrossOver" unique_id=95769734]
+position = Vector2(3144, 441.59998)
+script = ExtResource("5_7wh6k")
+action = 1
+face_degrees = 90.0
+
+[node name="DoubleBack" type="Node2D" parent="Route/Middle/CrossOver" unique_id=714193779]
+position = Vector2(3936, 384)
+script = ExtResource("5_7wh6k")
+action = 4
+min_alert = 2
+
+[node name="C7" type="Node2D" parent="Route/Middle/CrossOver" unique_id=1595231905]
+position = Vector2(4608, 384)
+script = ExtResource("5_7wh6k")
+action = 3
+
+[node name="C8" type="Node2D" parent="Route/Middle/CrossOver" unique_id=342435927]
+position = Vector2(4992, 384)
+script = ExtResource("5_7wh6k")
+
+[node name="CurbBack" type="Node2D" parent="Route/Middle/CrossOver" unique_id=1416489236]
+position = Vector2(4992, 331.2)
+script = ExtResource("5_7wh6k")
+action = 3
+chance = 0.7
+
+[node name="Back" type="Node2D" parent="Route/Middle/CrossOver" unique_id=1310234599]
+position = Vector2(4992, -153.6)
+script = ExtResource("5_7wh6k")
+
+[node name="BeforeCorner" type="Node2D" parent="Route" unique_id=1321900474]
+position = Vector2(5472, -153.6)
+script = ExtResource("5_7wh6k")
+action = 2
+chance = 0.5
+
+[node name="Corner" type="Node2D" parent="Route" unique_id=1973448766]
+position = Vector2(6048, -153.6)
+script = ExtResource("5_7wh6k")
+
+[node name="UpTheSideStreet" type="Node2D" parent="Route" unique_id=336845290]
+position = Vector2(6048, -672)
+script = ExtResource("5_7wh6k")
+action = 3
+
+[node name="Door" type="Node2D" parent="Route" unique_id=1471806858]
+script = ExtResource("6_mdqde")
+
+[node name="Hotel" type="Node2D" parent="Route/Door" unique_id=1332718060]
+script = ExtResource("4_e26kv")
+
+[node name="Approach" type="Node2D" parent="Route/Door/Hotel" unique_id=1334377764]
+position = Vector2(6048, -1440)
+script = ExtResource("5_7wh6k")
+
+[node name="Enter" type="Node2D" parent="Route/Door/Hotel" unique_id=1879621115 node_paths=PackedStringArray("building")]
+position = Vector2(5832, -1440)
+script = ExtResource("5_7wh6k")
+action = 6
+building = NodePath("../../../../Buildings/North12")
+
+[node name="PrintShop" type="Node2D" parent="Route/Door" unique_id=1624473626]
+script = ExtResource("4_e26kv")
+
+[node name="Approach" type="Node2D" parent="Route/Door/PrintShop" unique_id=433147198]
+position = Vector2(6048, -864)
+script = ExtResource("5_7wh6k")
+
+[node name="Enter" type="Node2D" parent="Route/Door/PrintShop" unique_id=827680064 node_paths=PackedStringArray("building")]
+position = Vector2(6264, -864)
+script = ExtResource("5_7wh6k")
+action = 6
+building = NodePath("../../../../Buildings/North13")
+
+[node name="SightShade" type="CanvasGroup" parent="." unique_id=134684129 node_paths=PackedStringArray("eye")]
+script = ExtResource("7_wvkha")
+eye = NodePath("../Spy")
+
+[node name="Subject" type="Node2D" parent="." unique_id=1555299953 node_paths=PackedStringArray("route") instance=ExtResource("8_rwp7t")]
+z_index = 8
+position = Vector2(484, -225.6)
+script = ExtResource("9_2fbfx")
+route = NodePath("../Route")
+
+[node name="Spy" type="CharacterBody2D" parent="." unique_id=1612717943 instance=ExtResource("10_2wbg1")]
+z_index = 8
+position = Vector2(-672, 384)
+motion_mode = 1
+script = ExtResource("11_hgsas")
+
+[node name="LastSeen" type="Node2D" parent="." unique_id=1523952697]
+script = ExtResource("12_qn7up")
+
+[node name="Debug" type="Node2D" parent="." unique_id=1604894601 node_paths=PackedStringArray("director", "label")]
+script = ExtResource("13_ivork")
+director = NodePath("../Director")
+label = NodePath("../Hud/DebugText")
+
+[node name="Camera" type="Camera2D" parent="." unique_id=2122005248 node_paths=PackedStringArray("director")]
+zoom = Vector2(0.9, 0.9)
+script = ExtResource("14_3gca0")
+director = NodePath("../Director")
+
+[node name="GrainOverlay" type="CanvasLayer" parent="." unique_id=1495337460 instance=ExtResource("15_12x4t")]
+layer = 10
+script = ExtResource("16_n4d3w")
+
+[node name="Hud" type="CanvasLayer" parent="." unique_id=1908000471]
+layer = 11
+
+[node name="Message" type="Label" parent="Hud" unique_id=99451492]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -500.0
+offset_top = -190.0
+offset_right = 500.0
+offset_bottom = -40.0
+theme_override_font_sizes/font_size = 22
+theme_override_colors/font_color = Color(0.93, 0.95, 0.98, 1)
+theme_override_colors/font_outline_color = Color(0.02, 0.03, 0.05, 1)
+theme_override_constants/outline_size = 6
+horizontal_alignment = 1
+vertical_alignment = 2
+
+[node name="DebugText" type="Label" parent="Hud" unique_id=1327197830]
+offset_left = 16.0
+offset_top = 12.0
+offset_right = 16.0
+offset_bottom = 12.0
+theme_override_font_sizes/font_size = 15
+theme_override_colors/font_color = Color(0.93, 0.95, 0.98, 1)
+theme_override_colors/font_outline_color = Color(0.02, 0.03, 0.05, 1)
+theme_override_constants/outline_size = 6
+
+[node name="Director" type="Node" parent="." unique_id=128414739 node_paths=PackedStringArray("subject", "spy", "grain", "marker", "message")]
+script = ExtResource("17_qui2e")
+subject = NodePath("../Subject")
+spy = NodePath("../Spy")
+grain = NodePath("../GrainOverlay")
+marker = NodePath("../LastSeen")
+message = NodePath("../Hud/Message")

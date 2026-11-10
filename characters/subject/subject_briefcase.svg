@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <!-- The subject's red briefcase, carried in the right hand. Same canvas and
+       pivot as subject_body.svg. It is the only saturated colour on the
+       street, so the grain shader's accent passthrough keeps it red. -->
+  <rect x="56" y="108" width="30" height="11" rx="2" fill="#c8241b"/>
+  <rect x="66" y="106" width="10" height="3" rx="1.5" fill="#6e120d"/>
+</svg>

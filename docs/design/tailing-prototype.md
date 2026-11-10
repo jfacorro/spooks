@@ -208,7 +208,7 @@ These are starting points for the first playtest, not final numbers. The prototy
 | Look-back cone | 120°, 20 m; a glance 60° | Matches the edge of the heat bands |
 | Forward vision | 110°, 20 m | |
 | Looking down from the top of stairs | 30 m, all around | Sees over crowds |
-| Camera zoom | 0.6, about 44 × 25 m on screen | 0.5 on the bridge, 0.75 underground |
+| Camera zoom | 0.9, about 30 × 17 m on screen | 0.75 on the bridge, 1.1 underground. At 0.6 the mocks showed people too small to read |
 | Camera lean | Up to 30% of the screen | Toward the last known position |
 | Train doors | Open 8 s | Chime 2 s before they close |
 | Checkpoints | Start of each beat | |
