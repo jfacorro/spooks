@@ -41,12 +41,17 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+	# People can leave the street (and be freed) between the director's update
+	# and this one, so check each one is still there before using it.
 	for person in people_in_way:
-		if not _person_shade.has(person):
+		if is_instance_valid(person) and not _person_shade.has(person):
 			_person_shade[person] = 0.0
 	for person in _person_shade.keys():
+		if not is_instance_valid(person):
+			_person_shade.erase(person)
+			continue
 		var showing := people_in_way.has(person)
-		if not is_instance_valid(person) or (not showing and _person_shade[person] <= 0.0):
+		if not showing and _person_shade[person] <= 0.0:
 			_person_shade.erase(person)
 			continue
 		_person_shade[person] = move_toward(_person_shade[person], 1.0 if showing else 0.0, 6.0 * delta)

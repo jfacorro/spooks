@@ -18,6 +18,7 @@
 [ext_resource type="PackedScene" path="res://post_process/grain_overlay.tscn" id="15_12x4t"]
 [ext_resource type="Script" path="res://tailing/tail_director.gd" id="17_qui2e"]
 [ext_resource type="Script" path="res://tailing/hud/sighting_meter.gd" id="18_sightings"]
+[ext_resource type="Script" path="res://tailing/sight/mirror_view.gd" id="19_mirror"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_8kf65"]
 size = Vector2(48, 720)
@@ -275,6 +276,12 @@ dark = false
 position = Vector2(312, 2640)
 script = ExtResource("3_gssxx")
 
+[node name="WindowSide" type="Node2D" parent="Buildings/North12"]
+position = Vector2(528, 2616)
+rotation = -1.5707964
+script = ExtResource("3_gssxx")
+length = 216.0
+
 [node name="North13" type="StaticBody2D" parent="Buildings" unique_id=1616557596]
 position = Vector2(6240, -2880)
 script = ExtResource("2_g3ifm")
@@ -291,6 +298,12 @@ script = ExtResource("3_gssxx")
 position = Vector2(360, 2640)
 script = ExtResource("3_gssxx")
 dark = false
+
+[node name="WindowSide" type="Node2D" parent="Buildings/North13"]
+position = Vector2(0, 2400)
+rotation = 1.5707964
+script = ExtResource("3_gssxx")
+length = 216.0
 
 [node name="North14" type="StaticBody2D" parent="Buildings" unique_id=1996240567]
 position = Vector2(6816, -2880)
@@ -774,6 +787,11 @@ position = Vector2(2880, -153.6)
 script = ExtResource("5_7wh6k")
 action = 2
 
+[node name="CheckGlass" type="Node2D" parent="Route/Middle/NorthSide"]
+position = Vector2(3518.4, -201.6)
+script = ExtResource("5_7wh6k")
+action = 7
+
 [node name="N4" type="Node2D" parent="Route/Middle/NorthSide" unique_id=875004004]
 position = Vector2(3744, -153.6)
 script = ExtResource("5_7wh6k")
@@ -813,11 +831,10 @@ position = Vector2(2640, 384)
 script = ExtResource("5_7wh6k")
 action = 2
 
-[node name="WindowShop" type="Node2D" parent="Route/Middle/CrossOver" unique_id=95769734]
+[node name="CheckGlass" type="Node2D" parent="Route/Middle/CrossOver" unique_id=95769734]
 position = Vector2(3144, 441.59998)
 script = ExtResource("5_7wh6k")
-action = 1
-face_degrees = 90.0
+action = 7
 
 [node name="DoubleBack" type="Node2D" parent="Route/Middle/CrossOver" unique_id=714193779]
 position = Vector2(3936, 384)
@@ -891,6 +908,10 @@ building = NodePath("../../../../Buildings/North13")
 [node name="SightShade" type="CanvasGroup" parent="." unique_id=134684129 node_paths=PackedStringArray("eye")]
 script = ExtResource("7_wvkha")
 eye = NodePath("../Spy/Eye")
+
+[node name="MirrorView" type="Node2D" parent="." node_paths=PackedStringArray("director")]
+script = ExtResource("19_mirror")
+director = NodePath("../Director")
 
 [node name="Subject" parent="." unique_id=1555299953 node_paths=PackedStringArray("route") instance=ExtResource("8_rwp7t")]
 position = Vector2(484, -225.6)

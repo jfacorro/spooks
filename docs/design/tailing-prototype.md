@@ -85,6 +85,7 @@ Past 20 m the subject can't pick you out, but crowds and corners break your sigh
 | Peeking around a corner | ×0.2 |
 | Moving with a crowd (3 or more pedestrians within 2 m) | ×0.3 |
 | Browsing a shop window or standing in a doorway | ×0.5 |
+| Standing in a lit window's light | ×1.3, on top of the rest |
 | On the opposite sidewalk | ×0.6 |
 | Walking at crowd pace | ×1 |
 | Standing still and facing the subject | ×1.5 |
@@ -135,13 +136,17 @@ Shop windows are mirrors that work for both sides. The subject uses them to chec
 
 **Which windows reflect.** Only dark windows reflect; a lit shop window is see-through. Dark glass is drawn with a thin bright edge, so the player can tell at a glance which windows are mirrors. That also gives the level designer a simple way to tune each stretch of street.
 
-**How it works from above.** Each window is a line segment along a building front. To find what someone sees in it, mirror their position across that line; everything inside the wedge from the mirrored point through the window's two ends, on the street side, is visible in the glass. Every dark window has two wedges, one from the subject and one from the spy, and each is drawn as a faint pale shape on the pavement in its own tint.
+**Lit windows.** A lit window throws a soft pool of light on the pavement in front of it, a 2D light that falls on the ground and on people but not on roofs or the shading of what the spy can't see. Standing in it makes the subject notice you 1.3 times as fast, and "in the light" shows under the meter when you're in no cover. Lit windows are spots to avoid; dark ones are mirrors to use.
 
-**Both wedges move.** Each one reshapes every frame as its owner walks, and only shows for windows within 10 m of them, so the safe spots around a window shift with every step. The subject's wedge brightens while they are checking the glass. Reflections work both ways: if the subject is inside your wedge, you are inside theirs, and only their attention decides whether you are seen.
+**How it works from above.** Each window is a line segment along a building front. To find what someone sees in it, mirror their position across that line; everything inside the wedge from the mirrored point through the window's two ends, on the street side, is visible in the glass, as long as both halves of the real path (to the glass, then on to the point) are clear of walls and people. Distance counts the whole path. A wedge is drawn as a pale shape on the pavement.
 
-**The subject's reflection check.** At some waypoints, and at every dark window once Wary, the subject stops and faces the glass for 2 s. The tell is that they slow down and turn toward the window. Anything inside the subject's wedge counts as seen, using the same distance bands as a look-back.
+**Both wedges move.** Each one reshapes every frame as its owner walks, so the safe spots around a window shift with every step. The spy's wedges show, faint and dashed, for every dark window within 10 m of them, and brighten while the subject is in one. The subject's shows only while they're checking the glass. Reflections work both ways: if the subject is inside your wedge, you are inside theirs, and only their attention decides whether you are seen.
 
-**The spy's reflection view.** Browsing a dark window extends the spy's sight through the spy's wedge. A window on a corner shop, or across the street, can show you which way the subject turned without you having to peek.
+**The subject's reflection check.** At a few set points on the route, and now and then once they're wary, the subject stops and watches a dark window for 2 s. Once wary there's a 1 in 4 chance at each dark window they pass, 1 in 2 once suspicious, and never two checks within 10 s. The tell is that they slow down and turn to the glass for half a second first. Anything inside their wedge is seen, and the noticing goes by the distance along the path through the glass.
+
+**The spy's reflection view.** The spy already sees all round, so a reflection only helps where a wall is in the way. Any dark window within 10 m shows you what's in its glass, with nothing to press: if the subject shows in it, you have contact. The corner buildings at the side street have dark windows on their side walls, so from the main street, just short of the corner, the glass shows you who's walking up it without having to peek.
+
+**Browsing.** Press E in front of a shop window to stop and browse it, facing the glass. It counts as cover, like a doorway. Walking off ends it. Anywhere else along a wall, E hugs the wall as before.
 
 ## The street route
 
@@ -174,7 +179,7 @@ The spy moves the same way as in the demo: 8-way movement, with the body turning
 | Shift / left trigger, hold | Hurry |
 | Space / A, hold | Run |
 | E / X next to a wall | Hug the wall; push toward the corner to peek |
-| E / X at a shop window | Browse; at a dark window, your sight extends through the reflection |
+| E / X at a shop window | Browse it: cover, facing the glass. Dark windows near you show you what's in their glass anyway |
 
 **Camera.** The camera follows the spy and leans toward the subject's last known position, so both usually fit on screen. It pulls back on the bridge and moves in underground.
 
@@ -184,7 +189,7 @@ The spy moves the same way as in the demo: 8-way movement, with the body turning
 - The subject's red briefcase passes through the colour grade untouched.
 - Look-back cones and reflection wedges are pale and translucent, like the flashlight in the demo.
 - Three marks at the top of the screen are the sightings the subject can make; one fills with each sighting. Under them, a bar fills while the subject is noticing you and drains when you get out of sight. While the subject is looking right at the spy, the bar pulses and says SEEN, the cone that caught them brightens, and a ring pulses around the spy. Grain and vignette tighten with each sighting, and the subject's posture changes with each state.
-- The cover you're in shows under the middle of the meter: "in a crowd", "in a doorway" or "peeking". People, parked cars and kiosks cut shadows out of the subject's cone, so you can see who's hiding you.
+- The cover you're in shows under the middle of the meter: "in a crowd", "in a doorway", "browsing a window" or "peeking"; out of cover, "in the light" warns you're standing in a lit window's glow. People, parked cars and kiosks cut shadows out of the subject's cone, so you can see who's hiding you.
 - Parked cars and kiosks shade the street behind them like walls do. People don't, or a crowd would cover the street in flickering shadows; only the people hiding the subject from you throw a soft streak of shadow toward where the subject is.
 - While you hug a wall, a pale line runs along it at your back.
 - The sighting marks and noticing bar, the last-seen marker and its lost-timer ring are the only HUD. A debug overlay on F2 shows the exact noticing and bands for playtesting.
@@ -197,7 +202,7 @@ Build it in five steps. Each one is playable and answers one question before the
 | --- | --- | --- |
 | 1. One street | Grey-box street with one corner, the subject's route with look-backs and tells, sightings, contact, the lost timer, spy movement, restart | Is keeping the distance fun with nothing else in the way? |
 | 2. Crowd and cover | Pedestrians, crowd blending, doorways, corner peeks, parked cars and kiosks | Does the crowd make the tail easier and harder at the same time? |
-| 3. Reflections | Dark and lit windows, the subject's reflection checks, browsing a window, the spy's reflection view | Can players read the wedge from above without being told? |
+| 3. Reflections | Dark and lit windows (lit ones as 2D lights), the subject's reflection checks, browsing a window, the spy's reflection view | Can players read the wedge from above without being told? |
 | 4. Traffic | Road lanes, cars and a bus as moving blockers, lights, horns, the subject's dash | Is running through traffic a real choice rather than the only one? |
 | 5. Stairs, bridge, subway | Stairs between levels, the open bridge, turnstiles, the train and its doors, and the ending: seeing which building the subject enters | Do the last beats feel different from the street? |
 
@@ -236,6 +241,9 @@ These are starting points for the first playtest, not final numbers. The prototy
 | Noticing drain | Full to empty in about 0.7 s | |
 | Glances | Notice twice as fast | |
 | A new sighting | After 2 s out of the subject's sight | |
+| Mirror view | Dark windows within 10 m of the spy | |
+| Glass checks | 0.5 s tell, 2 s watching; 1 in 4 dark windows once wary, 1 in 2 once suspicious; 10 s apart | |
+| Window light | ×1.3 noticing in the pool | |
 
 ## Open questions
 
