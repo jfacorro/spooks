@@ -956,11 +956,12 @@ mouse_filter = 2
 script = ExtResource("18_heat")
 director = NodePath("../../Director")
 
-[node name="Director" type="Node" parent="." unique_id=128414739 node_paths=PackedStringArray("subject", "spy", "crowd", "grain", "marker", "message")]
+[node name="Director" type="Node" parent="." unique_id=128414739 node_paths=PackedStringArray("subject", "spy", "crowd", "shade", "grain", "marker", "message")]
 script = ExtResource("17_qui2e")
 subject = NodePath("../Subject")
 spy = NodePath("../Spy")
 crowd = NodePath("../Crowd")
+shade = NodePath("../SightShade")
 grain = NodePath("../GrainOverlay")
 marker = NodePath("../LastSeen")
 message = NodePath("../Hud/Message")

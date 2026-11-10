@@ -21,6 +21,7 @@ const COVER_NAMES := {&"peeking": "peeking", &"doorway": "in a doorway", &"crowd
 @export var subject: Subject
 @export var spy: TailSpy
 @export var crowd: Crowd
+@export var shade: SightShade
 @export var grain: CanvasLayer
 @export var marker: LastSeenMarker
 @export var message: Label
@@ -162,9 +163,14 @@ func heat_floor() -> float:
 func _update_contact(delta: float) -> void:
 	var eye := spy.eye_position()
 	var target := subject.global_position
-	contact = not subject.is_gone() \
-		and eye.distance_to(target) <= contact_range \
-		and Occlusion.clear_line(eye, target)
+	var in_range := not subject.is_gone() and eye.distance_to(target) <= contact_range
+	contact = in_range and Occlusion.clear_line(eye, target)
+	# When it's only people hiding them, those people throw a shadow.
+	if shade != null:
+		shade.people_in_way.clear()
+		if in_range and not contact and Occlusion.clear_line(eye, target, false):
+			shade.people_in_way = Occlusion.people_between(eye, target)
+			shade.hidden_at = target
 	if contact:
 		_out_of_contact = 0.0
 		known_position = target
@@ -342,6 +348,8 @@ func _finish(result: Outcome, block: StreetBlock = null) -> void:
 	spy.frozen = true
 	spy.spotted = false
 	cover = &""
+	if shade != null:
+		shade.people_in_way.clear()
 	marker.visible = false
 	_message_until = INF
 	match result:

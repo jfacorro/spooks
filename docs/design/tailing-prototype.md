@@ -181,6 +181,7 @@ The spy moves the same way as in the demo: 8-way movement, with the body turning
 - Look-back cones and reflection wedges are pale and translucent, like the flashlight in the demo.
 - Heat shows on a slim meter at the top of the screen, with ticks where the subject turns wary and suspicious. While the subject is looking right at the spy, the meter says SEEN, the cone that caught them brightens, and a ring pulses around the spy. Grain and vignette also tighten as heat rises, and the subject's posture changes with each state.
 - The cover you're in shows under the middle of the meter: "in a crowd", "in a doorway" or "peeking". People, parked cars and kiosks cut shadows out of the subject's cone, so you can see who's hiding you.
+- Parked cars and kiosks shade the street behind them like walls do. People don't, or a crowd would cover the street in flickering shadows; only the people hiding the subject from you throw a soft streak of shadow toward where the subject is.
 - While you hug a wall, a pale line runs along it at your back.
 - The heat meter, the last-seen marker and its lost-timer ring are the only HUD. A debug overlay on F2 shows exact heat and bands for playtesting.
 

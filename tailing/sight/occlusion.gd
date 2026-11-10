@@ -92,6 +92,17 @@ static func clear_line(from: Vector2, to: Vector2, people := true) -> bool:
 	return ray(from, to, people) == to
 
 
+## The people standing in the way of the line from `from` to `to`.
+static func people_between(from: Vector2, to: Vector2) -> Array[Node2D]:
+	var found: Array[Node2D] = []
+	var span := Rect2(from, Vector2.ZERO).expand(to).grow(PERSON_RADIUS)
+	for person in _people:
+		var p := person.global_position
+		if span.has_point(p) and _disc_cut(from, to, p) != to:
+			found.append(person)
+	return found
+
+
 ## A view cone clipped by walls and people, as a polygon fan around `eye`.
 static func fan(eye: Vector2, facing: float, half_angle: float, radius: float, rays := 72) -> PackedVector2Array:
 	# Only the people inside the cone can cut it: note the angle each one
